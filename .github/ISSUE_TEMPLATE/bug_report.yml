@@ -1,0 +1,95 @@
+name: Reporte de error
+description: Informar un problema reproducible que debe corregirse.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usar este formulario para reportar errores con contexto suficiente para reproducirlos y validarlos.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Qué ocurrió
+      description: Describe el comportamiento observado.
+      placeholder: "Al intentar..., el sistema..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Comportamiento esperado
+      description: Explica qué debería haber ocurrido.
+      placeholder: "Debería..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Pasos para reproducir
+      description: Escribe pasos claros y ordenados.
+      placeholder: |
+        1. Ir a...
+        2. Hacer clic en...
+        3. Completar...
+        4. Ver el error...
+    validations:
+      required: true
+
+  - type: input
+    id: affected-area
+    attributes:
+      label: Área afectada
+      description: Indica modulo, pantalla, flujo o parte del proyecto.
+      placeholder: "Ejemplo: Login, Registro, Dashboard, API"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno, navegador o dispositivo
+      description: Completar si el error depende del entorno.
+      placeholder: |
+        - Sistema operativo:
+        - Navegador y versión:
+        - Dispositivo:
+        - Versión o rama:
+    validations:
+      required: false
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencia, capturas o logs
+      description: Agrega capturas, videos, mensajes de error o logs relevantes.
+      placeholder: "Pegar logs o adjuntar capturas si aplica."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impacto o prioridad
+      options:
+        - "Crítica: bloquea el uso principal"
+        - "Alta: afecta una funcionalidad importante"
+        - "Media: existe alternativa temporal"
+        - "Baja: problema menor o visual"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Criterios de aceptación de la corrección
+      description: Lista condiciones verificables para confirmar que el error fue resuelto.
+      placeholder: |
+        - [ ] El error ya no ocurre al...
+        - [ ] Se mantiene el comportamiento esperado en...
+        - [ ] Se probó en...
+    validations:
+      required: true

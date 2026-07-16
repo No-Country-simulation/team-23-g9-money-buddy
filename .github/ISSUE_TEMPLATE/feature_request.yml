@@ -1,0 +1,86 @@
+name: Solicitud de funcionalidad
+description: Proponer una mejora o historia de usuario para el sprint.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usar este formulario para describir una funcionalidad clara, revisable y vinculable a un Pull Request.
+
+  - type: input
+    id: title
+    attributes:
+      label: Título breve
+      description: Resume la funcionalidad en una frase corta.
+      placeholder: "Ejemplo: Permitir registrar gastos por categoría"
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: Historia de usuario
+      description: Escribir la necesidad desde la perspectiva del usuario.
+      placeholder: "Como usuario, quiero registrar mis gastos por categoría para entender mejor mi presupuesto."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Problema o contexto
+      description: Explica por qué esta funcionalidad es necesaria.
+      placeholder: "Actualmente... Esto dificulta..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Solución propuesta o alcance
+      description: Describe qué debería incluir esta tarea y, si aplica, qué queda fuera.
+      placeholder: "Incluir... No incluir..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Criterios de aceptación
+      description: Lista condiciones verificables para considerar terminada la historia.
+      placeholder: |
+        - [ ] El usuario puede...
+        - [ ] Se muestra...
+        - [ ] Se valida...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridad
+      options:
+        - Alta
+        - Media
+        - Baja
+    validations:
+      required: true
+
+  - type: input
+    id: affected-area
+    attributes:
+      label: Área afectada
+      description: Indica modulo, pantalla, flujo o parte del proyecto.
+      placeholder: "Ejemplo: Autenticación, Dashboard, Gastos, Documentación"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Contexto adicional
+      description: Agrega enlaces, capturas, referencias o decisiones relevantes.
+      placeholder: "No aplica."
+    validations:
+      required: false
