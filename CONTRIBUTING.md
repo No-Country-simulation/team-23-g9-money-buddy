@@ -6,7 +6,7 @@ Este repositorio trabaja con **GitHub Flow**. Todo cambio debe salir de un Issue
 
 1. Tomar un Issue del sprint.
 2. Crear una rama desde `main`.
-3. Hacer commits pequeños con formato convencional.
+3. Hacer commits pequeños con formato conventional commits.
 4. Abrir un Pull Request vinculado al Issue.
 5. Pedir review cuando el PR esté listo.
 6. Fusionar con **Squash and merge** después de la aprobación.
@@ -67,10 +67,11 @@ Evitar mensajes genéricos como `cambios`, `avance`, `update` o `fix` sin contex
 
 ## Requisitos de Pull Request
 
-- Debe explicar qué se hizo.
-- Debe indicar cómo se probó.
-- Debe vincular el Issue con `Closes #numero`.
-- Debe incluir capturas si afecta la interfaz.
+- Todo PR debe usar y completar la plantilla `.github/pull_request_template.md`.
+- La sección **Qué se hizo** debe explicar el cambio principal.
+- La sección **Cómo se probó** debe indicar la verificación realizada.
+- La sección **Issue relacionado** debe vincular el Issue con `Closes #numero`.
+- La sección **Capturas** debe completarse si afecta la interfaz; si no aplica, escribir `No aplica`.
 - Debe ser pequeño y enfocado; si requiere más de 20 a 30 minutos de review, dividirlo.
 - No debe mezclar funcionalidades, refactors y correcciones no relacionadas.
 
