@@ -30,7 +30,7 @@ Docker crea una imagen del backend con Java y la aplicación ya empaquetada. Doc
 
 ```bash
 git clone <url-del-repositorio>
-cd hackathon-one-g9-latam
+cd team-23-g9-money-buddy
 ```
 
 Si ya tienes el repositorio local:
@@ -65,6 +65,7 @@ La API queda disponible en `http://localhost:8080`.
 ### Endpoints iniciales
 
 - `GET /api`: estado base de la API.
+- `POST /analisis-financiero`: recibe datos financieros en JSON y devuelve un análisis inicial.
 - `GET /actuator/health`: health check de Spring Actuator.
 
 ### Verificar endpoints
@@ -77,6 +78,44 @@ curl http://localhost:8080/actuator/health
 ```
 
 El health check debe responder con estado `UP`.
+
+### Probar análisis financiero
+
+Con la aplicación levantada, ejecutar:
+
+```bash
+curl -X POST http://localhost:8080/analisis-financiero \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ingreso_mensual": 1000,
+    "ahorro_mensual": 200,
+    "deuda_total": 1500,
+    "pago_mensual_deudas": 150,
+    "transacciones": [
+      {
+        "descripcion": "Supermercado",
+        "categoria": "alimentacion",
+        "monto": 120.50,
+        "fecha": "2026-07-20",
+        "tipo": "gastos"
+      }
+    ]
+  }'
+```
+
+La respuesta devuelve una estructura estable con:
+
+- `estado`
+- `resumen`
+- `indicadores`
+- `recomendaciones`
+
+Para probar el mismo endpoint desde Postman o Insomnia:
+
+1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
+2. Agregar el header `Content-Type: application/json`.
+3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
+4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores` y `recomendaciones`.
 
 ### Ejecutar pruebas
 
