@@ -117,6 +117,40 @@ Para probar el mismo endpoint desde Postman o Insomnia:
 3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
 4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores` y `recomendaciones`.
 
+### Validaciones del análisis financiero
+
+El endpoint `POST /analisis-financiero` rechaza requests incompletos o inválidos con estado `400`.
+
+Campos obligatorios:
+
+- `ingreso_mensual`: mayor que cero.
+- `ahorro_mensual`: mayor o igual que cero.
+- `deuda_total`: mayor o igual que cero.
+- `pago_mensual_deudas`: mayor o igual que cero.
+- `transacciones`: lista obligatoria y no vacía.
+
+Cada transacción debe incluir:
+
+- `descripcion`
+- `categoria`
+- `monto`: mayor que cero.
+- `fecha`
+- `tipo`
+
+Ejemplo de error:
+
+```json
+{
+  "estado": "request_invalido",
+  "errores": [
+    {
+      "campo": "transacciones[0].monto",
+      "mensaje": "El monto de la transacción debe ser mayor que cero"
+    }
+  ]
+}
+```
+
 ### Ejecutar pruebas
 
 ```bash

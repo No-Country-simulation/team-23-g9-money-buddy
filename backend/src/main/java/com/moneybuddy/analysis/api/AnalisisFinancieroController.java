@@ -1,6 +1,7 @@
 package com.moneybuddy.analysis.api;
 
 import com.moneybuddy.analysis.application.AnalisisFinancieroService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +17,7 @@ public final class AnalisisFinancieroController {
   }
 
   @PostMapping("/analisis-financiero")
-  public ResponseEntity<AnalisisFinancieroResponse> analizar(@RequestBody AnalisisFinancieroRequest request) {
+  public ResponseEntity<AnalisisFinancieroResponse> analizar(@Valid @RequestBody AnalisisFinancieroRequest request) {
     return ResponseEntity.ok(analisisFinancieroService.analizar(request));
   }
 }
