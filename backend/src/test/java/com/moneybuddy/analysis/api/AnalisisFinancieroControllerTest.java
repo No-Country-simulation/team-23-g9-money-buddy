@@ -65,4 +65,88 @@ class AnalisisFinancieroControllerTest {
         .andExpect(jsonPath("$.recomendaciones[0]").value("Mantén protegido el hábito de ahorro actual."))
         .andExpect(jsonPath("$.recomendaciones[1]").value("La presión de deuda está controlada; evita asumir nuevas obligaciones recurrentes."));
   }
+
+  @Test
+  void postAnalisisFinancieroRejectsMissingRequiredFinancialFields() throws Exception {
+    String request = """
+        {
+          "ahorro_mensual": 200,
+          "deuda_total": 1500,
+          "pago_mensual_deudas": 150,
+          "transacciones": [
+            {
+              "descripcion": "Tienda de comestibles",
+              "categoria": "comida",
+              "monto": 120.50,
+              "fecha": "2026-07-20",
+              "tipo": "gastos"
+            }
+          ]
+        }
+        """;
+
+    mockMvc.perform(post("/analisis-financiero")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.estado").value("request_invalido"))
+        .andExpect(jsonPath("$.errores").isArray())
+        .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')]").exists());
+  }
+
+  @Test
+  void postAnalisisFinancieroRejectsInvalidTransactionFields() throws Exception {
+    String request = """
+        {
+          "ingreso_mensual": 1000,
+          "ahorro_mensual": 200,
+          "deuda_total": 1500,
+          "pago_mensual_deudas": 150,
+          "transacciones": [
+            {
+              "descripcion": "",
+              "categoria": "comida",
+              "monto": -120.50,
+              "fecha": null,
+              "tipo": "gastos"
+            }
+          ]
+        }
+        """;
+
+    mockMvc.perform(post("/analisis-financiero")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.estado").value("request_invalido"))
+        .andExpect(jsonPath("$.errores").isArray())
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')]").exists())
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].monto')]").exists())
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')]").exists());
+  }
+
+  @Test
+  void postAnalisisFinancieroRejectsMalformedJsonBody() throws Exception {
+    String request = """
+        {
+          "ingreso_mensual": ,
+          "ahorro_mensual": 200,
+          "deuda_total": 1500,
+          "pago_mensual_deudas": 150,
+          "transacciones": []
+        }
+        """;
+
+    mockMvc.perform(post("/analisis-financiero")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.estado").value("request_invalido"))
+        .andExpect(jsonPath("$.errores").isArray())
+        .andExpect(jsonPath("$.errores[0].campo").value("body"))
+        .andExpect(jsonPath("$.errores[0].mensaje").value("El cuerpo de la solicitud debe ser un JSON válido"));
+  }
 }
