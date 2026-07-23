@@ -153,10 +153,29 @@ Ejemplo de error:
 
 ### Ejecutar pruebas
 
+Para ejecutar las pruebas unitarias y de integración del backend:
+
 ```bash
 cd backend
 mvn test
 ```
+
+#### Pruebas de validación del endpoint (`POST /analisis-financiero`)
+
+Las pruebas automatizadas en `AnalisisFinancieroControllerTest` cubren y garantizan el correcto funcionamiento de las validaciones:
+
+* **Casos Válidos:**
+  * Envío de datos completos (flujo de caja estable y cálculo de indicadores).
+  * Envío de datos mínimos válidos (verificando la estructura completa de la respuesta: `estado`, `resumen`, `indicadores` y `recomendaciones`).
+* **Casos Inválidos (Retorno con HTTP 400 y formato de error consistente):**
+  * Omitir campo financiero obligatorio (ej. sin `ingreso_mensual`).
+  * Omitir múltiples campos financieros obligatorios simultáneamente.
+  * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
+  * Transacción incompleta (omisión de campos obligatorios como `descripcion`, `categoria`, `fecha` y `tipo`).
+  * Transacción con datos inválidos (monto negativo, descripción vacía o fecha nula).
+  * Lista de transacciones vacía (`transacciones: []`).
+  * Cuerpo de solicitud vacío o con JSON mal formado.
+
 
 ---
 
