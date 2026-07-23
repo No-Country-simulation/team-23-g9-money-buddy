@@ -215,8 +215,10 @@ class AnalisisFinancieroControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.estado").value("request_invalido"))
         .andExpect(jsonPath("$.errores").isArray())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'deuda_total')]").exists());
+        .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')].mensaje")
+            .value("El ingreso mensual es obligatorio"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'deuda_total')].mensaje")
+            .value("La deuda total es obligatoria"));
   }
 
   @Test
@@ -246,7 +248,37 @@ class AnalisisFinancieroControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.estado").value("request_invalido"))
         .andExpect(jsonPath("$.errores").isArray())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')]").exists())
+        .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')].mensaje")
+            .value("El ingreso mensual debe ser mayor que cero"));
+  }
+
+  @Test
+  void postAnalisisFinancieroRechazaIngresoMensualNegativo() throws Exception {
+    String request = """
+        {
+          "ingreso_mensual": -1000,
+          "ahorro_mensual": 200,
+          "deuda_total": 1500,
+          "pago_mensual_deudas": 150,
+          "transacciones": [
+            {
+              "descripcion": "Supermercado",
+              "categoria": "alimentacion",
+              "monto": 120.50,
+              "fecha": "2026-07-20",
+              "tipo": "gastos"
+            }
+          ]
+        }
+        """;
+
+    mockMvc.perform(post("/analisis-financiero")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.estado").value("request_invalido"))
+        .andExpect(jsonPath("$.errores").isArray())
         .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')].mensaje")
             .value("El ingreso mensual debe ser mayor que cero"));
   }
@@ -274,10 +306,14 @@ class AnalisisFinancieroControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.estado").value("request_invalido"))
         .andExpect(jsonPath("$.errores").isArray())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].categoria')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo')]").exists());
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')].mensaje")
+            .value("La descripción es obligatoria y no puede estar vacía"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].categoria')].mensaje")
+            .value("La categoría de la transacción es obligatoria"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')].mensaje")
+            .value("La fecha de la transacción es obligatoria"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo')].mensaje")
+            .value("El tipo de transacción es obligatorio"));
   }
 
   @Test
