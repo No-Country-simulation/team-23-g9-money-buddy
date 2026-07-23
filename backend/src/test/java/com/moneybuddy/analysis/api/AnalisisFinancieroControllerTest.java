@@ -37,8 +37,15 @@ class AnalisisFinancieroControllerTest {
               "tipo": "gastos"
             },
             {
+              "descripcion": "Transporte publico",
+              "categoria": "transporte",
+              "monto": 50.25,
+              "fecha": "2026-07-21",
+              "tipo": "gastos"
+            },
+            {
               "descripcion": "Salario",
-              "categoria": "ingreso",
+              "categoria": "otros",
               "monto": 1000,
               "fecha": "2026-07-01",
               "tipo": "ingreso"
@@ -55,12 +62,16 @@ class AnalisisFinancieroControllerTest {
         .andExpect(jsonPath("$.estado").value("analisis_generado"))
         .andExpect(jsonPath("$.resumen.salud_financiera").value("estable"))
         .andExpect(jsonPath("$.resumen.flujo_mensual_estimado").value(650))
-        .andExpect(jsonPath("$.resumen.total_transacciones").value(2))
+        .andExpect(jsonPath("$.resumen.total_transacciones").value(3))
         .andExpect(jsonPath("$.indicadores.tasa_ahorro").value(0.2000))
         .andExpect(jsonPath("$.indicadores.ratio_pago_deudas").value(0.1500))
         .andExpect(jsonPath("$.indicadores.ratio_deuda_ingreso").value(1.5000))
         .andExpect(jsonPath("$.indicadores.nivel_ahorro").value("saludable"))
         .andExpect(jsonPath("$.indicadores.nivel_deuda").value("controlada"))
+        .andExpect(jsonPath("$.indicadores.gasto_total").value(170.75))
+        .andExpect(jsonPath("$.resumen_gastos.comida").value(120.50))
+        .andExpect(jsonPath("$.resumen_gastos.transporte").value(50.25))
+        .andExpect(jsonPath("$.resumen_gastos.otros").doesNotExist())
         .andExpect(jsonPath("$.recomendaciones").isArray())
         .andExpect(jsonPath("$.recomendaciones[0]").value("Mantén protegido el hábito de ahorro actual."))
         .andExpect(jsonPath("$.recomendaciones[1]").value("La presión de deuda está controlada; evita asumir nuevas obligaciones recurrentes."));
