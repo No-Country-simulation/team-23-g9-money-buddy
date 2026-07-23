@@ -122,9 +122,12 @@ class AnalisisFinancieroControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.estado").value("request_invalido"))
         .andExpect(jsonPath("$.errores").isArray())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].monto')]").exists())
-        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')]").exists());
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')].mensaje")
+            .value("La descripción es obligatoria y no puede estar vacía"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].monto')].mensaje")
+            .value("El monto de la transacción debe ser mayor que cero"))
+        .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')].mensaje")
+            .value("La fecha de la transacción es obligatoria"));
   }
 
   @Test
