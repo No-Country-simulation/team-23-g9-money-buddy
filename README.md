@@ -98,6 +98,20 @@ curl -X POST http://localhost:8080/analisis-financiero \
         "monto": 120.50,
         "fecha": "2026-07-20",
         "tipo": "gastos"
+      },
+      {
+        "descripcion": "Transporte publico",
+        "categoria": "transporte",
+        "monto": 50.25,
+        "fecha": "2026-07-21",
+        "tipo": "gastos"
+      },
+      {
+        "descripcion": "Salario",
+        "categoria": "otros",
+        "monto": 1000,
+        "fecha": "2026-07-01",
+        "tipo": "ingreso"
       }
     ]
   }'
@@ -108,14 +122,34 @@ La respuesta devuelve una estructura estable con:
 - `estado`
 - `resumen`
 - `indicadores`
+- `resumen_gastos`
 - `recomendaciones`
+
+Ejemplo parcial de indicadores y resumen de gastos:
+
+```json
+{
+  "indicadores": {
+    "tasa_ahorro": 0.2000,
+    "ratio_pago_deudas": 0.1500,
+    "ratio_deuda_ingreso": 1.5000,
+    "nivel_ahorro": "saludable",
+    "nivel_deuda": "controlada",
+    "gasto_total": 170.75
+  },
+  "resumen_gastos": {
+    "alimentacion": 120.50,
+    "transporte": 50.25
+  }
+}
+```
 
 Para probar el mismo endpoint desde Postman o Insomnia:
 
 1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
 2. Agregar el header `Content-Type: application/json`.
 3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
-4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores` y `recomendaciones`.
+4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores`, `resumen_gastos` y `recomendaciones`.
 
 ### Validaciones del análisis financiero
 

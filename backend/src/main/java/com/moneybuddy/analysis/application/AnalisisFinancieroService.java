@@ -5,7 +5,10 @@ import com.moneybuddy.analysis.api.AnalisisFinancieroResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +30,8 @@ public final class AnalisisFinancieroService {
     BigDecimal ratioPagoDeudas = ratio(pagoMensualDeudas, ingresoMensual);
     BigDecimal ratioDeudaIngreso = ratio(deudaTotal, ingresoMensual);
     BigDecimal flujoMensualEstimado = ingresoMensual.subtract(ahorroMensual).subtract(pagoMensualDeudas);
+    BigDecimal gastoTotal = gastoTotal(request.transacciones());
+    Map<String, BigDecimal> resumenGastos = resumenGastos(request.transacciones());
 
     String nivelAhorro = nivelAhorro(tasaAhorro);
     String nivelDeuda = nivelDeuda(ratioPagoDeudas, ratioDeudaIngreso);
@@ -43,7 +48,9 @@ public final class AnalisisFinancieroService {
             ratioPagoDeudas,
             ratioDeudaIngreso,
             nivelAhorro,
-            nivelDeuda),
+            nivelDeuda,
+            gastoTotal),
+        resumenGastos,
         recomendaciones(nivelAhorro, nivelDeuda, flujoMensualEstimado));
   }
 
@@ -57,6 +64,28 @@ public final class AnalisisFinancieroService {
     }
 
     return numerator.divide(denominator, 4, RoundingMode.HALF_UP);
+  }
+
+  private BigDecimal gastoTotal(List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
+    return transacciones.stream()
+        .filter(transaccion -> "gastos".equalsIgnoreCase(transaccion.tipo()))
+        .map(AnalisisFinancieroRequest.TransaccionRequest::monto)
+        .map(this::valueOrZero)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  private Map<String, BigDecimal> resumenGastos(List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
+    Map<String, BigDecimal> resumen = new LinkedHashMap<>();
+
+    for (AnalisisFinancieroRequest.TransaccionRequest transaccion : transacciones) {
+      if (!"gastos".equalsIgnoreCase(transaccion.tipo())) {
+        continue;
+      }
+
+      resumen.merge(transaccion.categoria(), valueOrZero(transaccion.monto()), BigDecimal::add);
+    }
+
+    return Collections.unmodifiableMap(resumen);
   }
 
   private String nivelAhorro(BigDecimal tasaAhorro) {
