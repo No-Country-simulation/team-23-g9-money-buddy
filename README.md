@@ -79,7 +79,29 @@ curl http://localhost:8080/actuator/health
 
 El health check debe responder con estado `UP`.
 
-### Probar análisis financiero
+#### Campos raíz
+
+| Campo | Tipo esperado | Regla |
+| --- | --- | --- |
+| `credito_total` | número | Obligatorio. Mayor o igual que cero. |
+| `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
+| `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
+| `nivel_endeudamiento` | texto | Obligatorio. Describe el nivel de endeudamiento reportado por el usuario. |
+| `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
+| `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
+
+#### Campos por transacción
+
+| Campo | Tipo esperado | Regla |
+| --- | --- | --- |
+| `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
+| `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
+| `descripcion` | texto | Obligatoria. No debe estar vacía. |
+| `tipoPago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
+| `meses_a_deber` | número entero | Condicional. Aplica cuando `tipoPago` es `Credito`. |
+| `monto` | número | Obligatorio. Mayor que cero. |
+
+#### Ejemplo de request válido
 
 Con la aplicación levantada, ejecutar:
 
@@ -87,31 +109,40 @@ Con la aplicación levantada, ejecutar:
 curl -X POST http://localhost:8080/analisis-financiero \
   -H "Content-Type: application/json" \
   -d '{
+    "credito_total": 1500,
     "ingreso_mensual": 1000,
-    "ahorro_mensual": 200,
-    "deuda_total": 1500,
+    "frecuencia_ahorro": "MEDIA",
+    "nivel_endeudamiento": "CONTROLADO",
     "pago_mensual_deudas": 150,
     "transacciones": [
       {
-        "descripcion": "Supermercado",
-        "categoria": "alimentacion",
-        "monto": 120.50,
+        "tipo": "Egreso",
         "fecha": "2026-07-20",
-        "tipo": "gastos"
+        "descripcion": "Supermercado",
+        "tipoPago": "Debito",
+        "monto": 120.50
       },
       {
-        "descripcion": "Transporte publico",
-        "categoria": "transporte",
-        "monto": 50.25,
+        "tipo": "Egreso",
         "fecha": "2026-07-21",
-        "tipo": "gastos"
+        "descripcion": "Transporte publico",
+        "tipoPago": "Efectivo",
+        "monto": 50.25
       },
       {
-        "descripcion": "Salario",
-        "categoria": "otros",
-        "monto": 1000,
+        "tipo": "Ingreso",
         "fecha": "2026-07-01",
-        "tipo": "ingreso"
+        "descripcion": "Salario",
+        "tipoPago": "Efectivo",
+        "monto": 1000
+      },
+      {
+        "tipo": "Egreso",
+        "fecha": "2026-07-10",
+        "descripcion": "Compra con tarjeta",
+        "tipoPago": "Credito",
+        "meses_a_deber": 3,
+        "monto": 300
       }
     ]
   }'
@@ -151,25 +182,27 @@ Para probar el mismo endpoint desde Postman o Insomnia:
 3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
 4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores`, `resumen_gastos` y `recomendaciones`.
 
-### Validaciones del análisis financiero
+### Validaciones esperadas del análisis financiero
 
 El endpoint `POST /analisis-financiero` rechaza requests incompletos o inválidos con estado `400`.
 
 Campos obligatorios:
 
+- `credito_total`: mayor o igual que cero.
 - `ingreso_mensual`: mayor que cero.
-- `ahorro_mensual`: mayor o igual que cero.
-- `deuda_total`: mayor o igual que cero.
+- `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
+- `nivel_endeudamiento`: no debe estar vacío.
 - `pago_mensual_deudas`: mayor o igual que cero.
 - `transacciones`: lista obligatoria y no vacía.
 
 Cada transacción debe incluir:
 
-- `descripcion`
-- `categoria`
+- `tipo`: debe ser `Ingreso` o `Egreso`.
+- `fecha`: fecha de la transacción.
+- `descripcion`: descripción de la transacción.
+- `tipoPago`: debe ser `Efectivo`, `Debito` o `Credito`.
+- `meses_a_deber`: obligatorio cuando `tipoPago` es `Credito`.
 - `monto`: mayor que cero.
-- `fecha`
-- `tipo`
 
 Ejemplo de error:
 
@@ -196,7 +229,7 @@ mvn test
 
 #### Pruebas de validación del endpoint (`POST /analisis-financiero`)
 
-Las pruebas automatizadas en `AnalisisFinancieroControllerTest` cubren y garantizan el correcto funcionamiento de las validaciones:
+Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el contrato oficial y garantizar el correcto funcionamiento de las validaciones:
 
 * **Casos Válidos:**
   * Envío de datos completos (flujo de caja estable y cálculo de indicadores).
@@ -205,8 +238,9 @@ Las pruebas automatizadas en `AnalisisFinancieroControllerTest` cubren y garanti
   * Omitir campo financiero obligatorio (ej. sin `ingreso_mensual`).
   * Omitir múltiples campos financieros obligatorios simultáneamente.
   * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
-  * Transacción incompleta (omisión de campos obligatorios como `descripcion`, `categoria`, `fecha` y `tipo`).
-  * Transacción con datos inválidos (monto negativo, descripción vacía o fecha nula).
+  * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipoPago` y `monto`).
+  * Transacción con datos inválidos (monto negativo, descripción vacía, fecha nula o enum inválido).
+  * Transacción con `tipoPago: "Credito"` sin `meses_a_deber`.
   * Lista de transacciones vacía (`transacciones: []`).
   * Cuerpo de solicitud vacío o con JSON mal formado.
 
