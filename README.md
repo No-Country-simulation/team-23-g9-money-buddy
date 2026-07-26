@@ -79,15 +79,7 @@ curl http://localhost:8080/actuator/health
 
 El health check debe responder con estado `UP`.
 
-### Contrato oficial de `POST /analisis-financiero`
-
-El contrato oficial de análisis financiero se basa en el documento actualizado `.atl/cambios a los endpoints.pdf`. Este contrato define el request y el response que Backend, Frontend y Data Science deben usar como referencia común para el MVP.
-
-Quedan fuera de este alcance:
-
-- Persistencia o base de datos.
-- Implementar la lógica de endpoints independientes como `/datos-usuario` o `/transacciones`.
-- Integración real con el modelo de Data Science.
+### Contrato `POST /analisis-financiero`
 
 #### Request
 
@@ -109,8 +101,8 @@ Quedan fuera de este alcance:
 | `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
 | `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
 | `descripcion` | texto | Obligatoria. No debe estar vacía. |
-| `tipoPago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
-| `meses_a_deber` | número entero | Condicional. Aplica cuando `tipoPago` es `Credito`. |
+| `tipo_pago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
+| `meses_a_deber` | número entero | Condicional. Aplica cuando `tipo_pago` es `Credito`. |
 | `monto` | número | Obligatorio. Mayor que cero. |
 
 #### Ejemplo de request válido
@@ -131,28 +123,28 @@ curl -X POST http://localhost:8080/analisis-financiero \
         "tipo": "Egreso",
         "fecha": "2026-07-20",
         "descripcion": "Supermercado",
-        "tipoPago": "Debito",
+        "tipo_pago": "Debito",
         "monto": 120.50
       },
       {
         "tipo": "Egreso",
         "fecha": "2026-07-21",
         "descripcion": "Transporte publico",
-        "tipoPago": "Efectivo",
+        "tipo_pago": "Efectivo",
         "monto": 50.25
       },
       {
         "tipo": "Ingreso",
         "fecha": "2026-07-01",
         "descripcion": "Salario",
-        "tipoPago": "Efectivo",
+        "tipo_pago": "Efectivo",
         "monto": 1000
       },
       {
         "tipo": "Egreso",
         "fecha": "2026-07-10",
         "descripcion": "Compra con tarjeta",
-        "tipoPago": "Credito",
+        "tipo_pago": "Credito",
         "meses_a_deber": 3,
         "monto": 300
       }
@@ -263,8 +255,8 @@ Cada transacción debe incluir:
 - `tipo`: debe ser `Ingreso` o `Egreso`.
 - `fecha`: fecha de la transacción.
 - `descripcion`: descripción de la transacción.
-- `tipoPago`: debe ser `Efectivo`, `Debito` o `Credito`.
-- `meses_a_deber`: obligatorio cuando `tipoPago` es `Credito`.
+- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito`.
+- `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
 - `monto`: mayor que cero.
 
 Ejemplo de error:
@@ -301,9 +293,9 @@ Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el 
   * Omitir campo financiero obligatorio (ej. sin `ingreso_mensual`).
   * Omitir múltiples campos financieros obligatorios simultáneamente.
   * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
-  * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipoPago` y `monto`).
+  * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipo_pago` y `monto`).
   * Transacción con datos inválidos (monto negativo, descripción vacía, fecha nula o enum inválido).
-  * Transacción con `tipoPago: "Credito"` sin `meses_a_deber`.
+  * Transacción con `tipo_pago: "Credito"` sin `meses_a_deber`.
   * Lista de transacciones vacía (`transacciones: []`).
   * Cuerpo de solicitud vacío o con JSON mal formado.
 
