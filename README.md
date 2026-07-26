@@ -90,7 +90,7 @@ El health check debe responder con estado `UP`.
 | `credito_total` | número | Obligatorio. Mayor o igual que cero. |
 | `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
 | `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
-| `nivel_endeudamiento` | número | Obligatorio. Valor entre 0 y 100. |
+| `nivel_endeudamiento` | número | Obligatorio. Valor entre 0 y 100, inclusive. |
 | `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
 | `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
 
@@ -101,7 +101,7 @@ El health check debe responder con estado `UP`.
 | `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
 | `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
 | `descripcion` | texto | Obligatoria. No debe estar vacía. |
-| `tipo_pago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
+| `tipo_pago` | texto | Condicional. Valores: `Efectivo`, `Debito`, `Credito`. Obligatorio cuando `tipo` es `Egreso`. |
 | `meses_a_deber` | número entero | Condicional. Aplica cuando `tipo_pago` es `Credito`. |
 | `monto` | número | Obligatorio. Mayor que cero. |
 
@@ -137,7 +137,6 @@ curl -X POST http://localhost:8080/analisis-financiero \
         "tipo": "Ingreso",
         "fecha": "2026-07-01",
         "descripcion": "Salario",
-        "tipo_pago": "Efectivo",
         "monto": 1000
       },
       {
@@ -172,7 +171,8 @@ Dentro de `data`, la respuesta incluye:
 | `recomendaciones` | Recomendaciones financieras generadas para el usuario. |
 
 Dentro de `resumen_gastos`:
-- gasto total por categoría: alimentacion, transporte, salud, vivienda, educacion, ocio_entretenimiento, servicios, compras y otros.
+
+- gasto total por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
 Dentro de `indicadores`:
 
@@ -185,7 +185,7 @@ Dentro de `indicadores`:
 - `gasto_total`
 - `ratio_pago_deudas`
 - `ratio_deuda_ingreso`
-- porcentajes por categoría: `alimentos`, `transporte`, `entretenimiento`, `salud`, `vivienda`, `educacion`, `viajes`, `servicios` y `otros`.
+- porcentajes por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
 Ejemplo parcial de response:
 
@@ -229,13 +229,14 @@ Ejemplo parcial de response:
     },
     "transacciones_clasificadas": [
       {
-        "tipo":"Egreso",
+        "tipo": "Egreso",
         "fecha": "2026-07-02",
         "descripcion": "Gas",
-        "tipoPago":"Credito",
+        "tipo_pago": "Credito",
         "meses_a_deber": 1,
         "monto": 420,
-        "categoria": "servicios" },
+        "categoria": "servicios"
+      }
     ],
     "recomendaciones": [
       "Mantener el nivel de ahorro mensual y revisar gastos recurrentes.",
@@ -261,7 +262,7 @@ Campos obligatorios:
 - `credito_total`: mayor o igual que cero.
 - `ingreso_mensual`: mayor que cero.
 - `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
-- `nivel_endeudamiento`: mayor o igual que 0 y menor que 100.
+- `nivel_endeudamiento`: mayor o igual que 0 y menor o igual que 100.
 - `pago_mensual_deudas`: mayor o igual que cero.
 - `transacciones`: lista obligatoria y no vacía.
 
@@ -270,7 +271,7 @@ Cada transacción debe incluir:
 - `tipo`: debe ser `Ingreso` o `Egreso`.
 - `fecha`: fecha de la transacción.
 - `descripcion`: descripción de la transacción.
-- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito`.
+- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito` cuando `tipo` es `Egreso`.
 - `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
 - `monto`: mayor que cero.
 
