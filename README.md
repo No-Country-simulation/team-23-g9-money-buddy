@@ -174,7 +174,7 @@ Dentro de `resumen_gastos`:
 
 - gasto total por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
-Dentro de `indicadores`:
+Dentro de `indicadores`, el documento actualizado define campos como:
 
 - `ingreso_mensual`
 - `deuda_total`
