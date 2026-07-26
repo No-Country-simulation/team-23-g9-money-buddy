@@ -101,7 +101,7 @@ El health check debe responder con estado `UP`.
 | `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
 | `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
 | `descripcion` | texto | Obligatoria. No debe estar vacía. |
-| `tipo_pago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
+| `tipo_pago` | texto | Condicional. Valores: `Efectivo`, `Debito`, `Credito`. Obligatorio cuando `tipo` es `Egreso`. |
 | `meses_a_deber` | número entero | Condicional. Aplica cuando `tipo_pago` es `Credito`. |
 | `monto` | número | Obligatorio. Mayor que cero. |
 
@@ -137,7 +137,6 @@ curl -X POST http://localhost:8080/analisis-financiero \
         "tipo": "Ingreso",
         "fecha": "2026-07-01",
         "descripcion": "Salario",
-        "tipo_pago": "Efectivo",
         "monto": 1000
       },
       {
@@ -272,7 +271,7 @@ Cada transacción debe incluir:
 - `tipo`: debe ser `Ingreso` o `Egreso`.
 - `fecha`: fecha de la transacción.
 - `descripcion`: descripción de la transacción.
-- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito`.
+- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito` cuando `tipo` es `Egreso`.
 - `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
 - `monto`: mayor que cero.
 
