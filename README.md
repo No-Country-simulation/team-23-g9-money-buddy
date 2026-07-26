@@ -90,7 +90,7 @@ El health check debe responder con estado `UP`.
 | `credito_total` | número | Obligatorio. Mayor o igual que cero. |
 | `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
 | `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
-| `nivel_endeudamiento` | texto | Obligatorio. Describe el nivel de endeudamiento reportado por el usuario. |
+| `nivel_endeudamiento` | número | Obligatorio. Valor entre 0 y 100, inclusive. |
 | `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
 | `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
 
@@ -116,7 +116,7 @@ curl -X POST http://localhost:8080/analisis-financiero \
     "credito_total": 1500,
     "ingreso_mensual": 1000,
     "frecuencia_ahorro": "MEDIA",
-    "nivel_endeudamiento": "CONTROLADO",
+    "nivel_endeudamiento": 25,
     "pago_mensual_deudas": 150,
     "transacciones": [
       {
@@ -143,7 +143,7 @@ curl -X POST http://localhost:8080/analisis-financiero \
       {
         "tipo": "Egreso",
         "fecha": "2026-07-10",
-        "descripcion": "Compra con tarjeta",
+        "descripcion": "Gas",
         "tipo_pago": "Credito",
         "meses_a_deber": 3,
         "monto": 300
@@ -171,6 +171,10 @@ Dentro de `data`, la respuesta incluye:
 | `transacciones_clasificadas` | Transacciones procesadas y clasificadas para el análisis. |
 | `recomendaciones` | Recomendaciones financieras generadas para el usuario. |
 
+Dentro de `resumen_gastos`:
+
+- gasto total por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+
 Dentro de `indicadores`, el documento actualizado define campos como:
 
 - `ingreso_mensual`
@@ -182,7 +186,7 @@ Dentro de `indicadores`, el documento actualizado define campos como:
 - `gasto_total`
 - `ratio_pago_deudas`
 - `ratio_deuda_ingreso`
-- porcentajes por categoría: `alimentos`, `transporte`, `entretenimiento`, `salud`, `vivienda`, `educacion`, `viajes`, `servicios` y `otros`.
+- porcentajes por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
 Ejemplo parcial de response:
 
@@ -194,14 +198,14 @@ Ejemplo parcial de response:
     "perfil_financiero": "CONTROLADO",
     "score_financiero": 78,
     "resumen_gastos": {
-      "alimentos": 120.50,
+      "alimentacion": 120.50,
       "transporte": 50.25,
-      "entretenimiento": 0,
       "salud": 0,
       "vivienda": 0,
       "educacion": 0,
-      "viajes": 0,
+      "ocio_entretenimiento": 0,
       "servicios": 0,
+      "compras": 0,
       "otros": 300
     },
     "indicadores": {
@@ -209,23 +213,36 @@ Ejemplo parcial de response:
       "deuda_total": 1500,
       "credito_total": 1500,
       "frecuencia_ahorro": "MEDIA",
-      "nivel_endeudamiento": "CONTROLADO",
+      "nivel_endeudamiento": 30,
       "pago_mensual_deudas": 150,
       "gasto_total": 470.75,
       "ratio_pago_deudas": 0.1500,
       "ratio_deuda_ingreso": 1.5000,
-      "porcentaje_alimentos": 12.05,
+      "porcentaje_alimentacion": 12.05,
       "porcentaje_transporte": 5.03,
-      "porcentaje_entretenimiento": 0,
       "porcentaje_salud": 0,
       "porcentaje_vivienda": 0,
       "porcentaje_educacion": 0,
-      "porcentaje_viajes": 0,
+      "porcentaje_ocio_entretenimiento": 0,
       "porcentaje_servicios": 0,
+      "porcentaje_compras": 0,
       "porcentaje_otros": 30
     },
-    "transacciones_clasificadas": [],
-    "recomendaciones": []
+    "transacciones_clasificadas": [
+      {
+        "tipo": "Egreso",
+        "fecha": "2026-07-02",
+        "descripcion": "Gas",
+        "tipo_pago": "Credito",
+        "meses_a_deber": 1,
+        "monto": 420,
+        "categoria": "servicios"
+      }
+    ],
+    "recomendaciones": [
+      "Mantener el nivel de ahorro mensual y revisar gastos recurrentes.",
+      "Monitorear el pago mensual de deudas para evitar presión financiera."
+    ]
   }
 }
 ```
@@ -246,7 +263,7 @@ Campos obligatorios:
 - `credito_total`: mayor o igual que cero.
 - `ingreso_mensual`: mayor que cero.
 - `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
-- `nivel_endeudamiento`: no debe estar vacío.
+- `nivel_endeudamiento`: mayor o igual que 0 y menor o igual que 100.
 - `pago_mensual_deudas`: mayor o igual que cero.
 - `transacciones`: lista obligatoria y no vacía.
 
