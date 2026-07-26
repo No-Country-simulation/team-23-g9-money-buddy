@@ -172,7 +172,7 @@ Dentro de `data`, la respuesta incluye:
 
 Dentro de `resumen_gastos`:
 
-- gasto total por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+- gasto total por categoría: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `viajes`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
 Dentro de `transacciones_clasificadas`, toda transacción debe incluir `categoria`:
 
@@ -190,7 +190,7 @@ Dentro de `indicadores`, el documento actualizado define campos como:
 - `gasto_total`
 - `ratio_pago_deudas`
 - `ratio_deuda_ingreso`
-- porcentajes por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+- porcentajes por categoría: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `viajes`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
 Ejemplo parcial de response:
 
@@ -202,11 +202,12 @@ Ejemplo parcial de response:
     "perfil_financiero": "CONTROLADO",
     "score_financiero": 78,
     "resumen_gastos": {
-      "alimentacion": 120.50,
+      "alimentos": 120.50,
       "transporte": 50.25,
       "salud": 0,
       "vivienda": 0,
       "educacion": 0,
+      "viajes": 0,
       "ocio_entretenimiento": 0,
       "servicios": 0,
       "compras": 0,
@@ -222,15 +223,18 @@ Ejemplo parcial de response:
       "gasto_total": 470.75,
       "ratio_pago_deudas": 0.1500,
       "ratio_deuda_ingreso": 1.5000,
-      "porcentaje_alimentacion": 12.05,
-      "porcentaje_transporte": 5.03,
-      "porcentaje_salud": 0,
-      "porcentaje_vivienda": 0,
-      "porcentaje_educacion": 0,
-      "porcentaje_ocio_entretenimiento": 0,
-      "porcentaje_servicios": 0,
-      "porcentaje_compras": 0,
-      "porcentaje_otros": 30
+      "porcentaje_categorias": {
+        "alimentos": 25.60,
+        "transporte": 10.67,
+        "salud": 0,
+        "vivienda": 0,
+        "educacion": 0,
+        "viajes": 0,
+        "ocio_entretenimiento": 0,
+        "servicios": 89.22,
+        "compras": 0,
+        "otros": 64.00
+      }
     },
     "transacciones_clasificadas": [
       {
@@ -268,7 +272,7 @@ Backend calcula:
 - `nivel_endeudamiento`: `(deuda_total / credito_total) * 100`, manejando división por cero de forma segura.
 - `gasto_total`: suma de transacciones `Egreso`.
 - `resumen_gastos`: totales por categoría usando transacciones clasificadas.
-- porcentajes por categoría: proporción de cada categoría respecto al ingreso mensual o al total definido para el análisis.
+- porcentajes por categoría: proporción de cada categoría respecto al gasto total de egresos del análisis.
 
 #### Responsabilidad Data Science vs Backend
 
