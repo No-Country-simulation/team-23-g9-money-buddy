@@ -79,7 +79,33 @@ curl http://localhost:8080/actuator/health
 
 El health check debe responder con estado `UP`.
 
-### Probar análisis financiero
+### Contrato `POST /analisis-financiero`
+
+#### Request
+
+#### Campos raíz
+
+| Campo | Tipo esperado | Regla |
+| --- | --- | --- |
+| `credito_total` | número | Obligatorio. Mayor o igual que cero. |
+| `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
+| `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
+| `nivel_endeudamiento` | texto | Obligatorio. Describe el nivel de endeudamiento reportado por el usuario. |
+| `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
+| `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
+
+#### Campos por transacción
+
+| Campo | Tipo esperado | Regla |
+| --- | --- | --- |
+| `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
+| `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
+| `descripcion` | texto | Obligatoria. No debe estar vacía. |
+| `tipo_pago` | texto | Obligatorio. Valores: `Efectivo`, `Debito`, `Credito`. |
+| `meses_a_deber` | número entero | Condicional. Aplica cuando `tipo_pago` es `Credito`. |
+| `monto` | número | Obligatorio. Mayor que cero. |
+
+#### Ejemplo de request válido
 
 Con la aplicación levantada, ejecutar:
 
@@ -87,59 +113,119 @@ Con la aplicación levantada, ejecutar:
 curl -X POST http://localhost:8080/analisis-financiero \
   -H "Content-Type: application/json" \
   -d '{
+    "credito_total": 1500,
     "ingreso_mensual": 1000,
-    "ahorro_mensual": 200,
-    "deuda_total": 1500,
+    "frecuencia_ahorro": "MEDIA",
+    "nivel_endeudamiento": "CONTROLADO",
     "pago_mensual_deudas": 150,
     "transacciones": [
       {
-        "descripcion": "Supermercado",
-        "categoria": "alimentacion",
-        "monto": 120.50,
+        "tipo": "Egreso",
         "fecha": "2026-07-20",
-        "tipo": "gastos"
+        "descripcion": "Supermercado",
+        "tipo_pago": "Debito",
+        "monto": 120.50
       },
       {
-        "descripcion": "Transporte publico",
-        "categoria": "transporte",
-        "monto": 50.25,
+        "tipo": "Egreso",
         "fecha": "2026-07-21",
-        "tipo": "gastos"
+        "descripcion": "Transporte publico",
+        "tipo_pago": "Efectivo",
+        "monto": 50.25
       },
       {
-        "descripcion": "Salario",
-        "categoria": "otros",
-        "monto": 1000,
+        "tipo": "Ingreso",
         "fecha": "2026-07-01",
-        "tipo": "ingreso"
+        "descripcion": "Salario",
+        "tipo_pago": "Efectivo",
+        "monto": 1000
+      },
+      {
+        "tipo": "Egreso",
+        "fecha": "2026-07-10",
+        "descripcion": "Compra con tarjeta",
+        "tipo_pago": "Credito",
+        "meses_a_deber": 3,
+        "monto": 300
       }
     ]
   }'
 ```
 
-La respuesta devuelve una estructura estable con:
+#### Response
 
-- `estado`
-- `resumen`
-- `indicadores`
-- `resumen_gastos`
-- `recomendaciones`
+La respuesta oficial usa un wrapper con:
 
-Ejemplo parcial de indicadores y resumen de gastos:
+- `success`: indica si la operación fue exitosa.
+- `message`: mensaje general de la operación.
+- `data`: objeto con el resultado del análisis financiero.
+
+Dentro de `data`, la respuesta incluye:
+
+| Campo | Descripción |
+| --- | --- |
+| `perfil_financiero` | Perfil financiero calculado para el usuario. |
+| `score_financiero` | Puntaje financiero general. |
+| `resumen_gastos` | Totales agrupados por categoría de gasto. |
+| `indicadores` | Métricas financieras calculadas a partir del request. |
+| `transacciones_clasificadas` | Transacciones procesadas y clasificadas para el análisis. |
+| `recomendaciones` | Recomendaciones financieras generadas para el usuario. |
+
+Dentro de `indicadores`, el documento actualizado define campos como:
+
+- `ingreso_mensual`
+- `deuda_total`
+- `credito_total`
+- `frecuencia_ahorro`
+- `nivel_endeudamiento`
+- `pago_mensual_deudas`
+- `gasto_total`
+- `ratio_pago_deudas`
+- `ratio_deuda_ingreso`
+- porcentajes por categoría: `alimentos`, `transporte`, `entretenimiento`, `salud`, `vivienda`, `educacion`, `viajes`, `servicios` y `otros`.
+
+Ejemplo parcial de response:
 
 ```json
 {
-  "indicadores": {
-    "tasa_ahorro": 0.2000,
-    "ratio_pago_deudas": 0.1500,
-    "ratio_deuda_ingreso": 1.5000,
-    "nivel_ahorro": "saludable",
-    "nivel_deuda": "controlada",
-    "gasto_total": 170.75
-  },
-  "resumen_gastos": {
-    "alimentacion": 120.50,
-    "transporte": 50.25
+  "success": true,
+  "message": "Análisis financiero generado correctamente",
+  "data": {
+    "perfil_financiero": "CONTROLADO",
+    "score_financiero": 78,
+    "resumen_gastos": {
+      "alimentos": 120.50,
+      "transporte": 50.25,
+      "entretenimiento": 0,
+      "salud": 0,
+      "vivienda": 0,
+      "educacion": 0,
+      "viajes": 0,
+      "servicios": 0,
+      "otros": 300
+    },
+    "indicadores": {
+      "ingreso_mensual": 1000,
+      "deuda_total": 1500,
+      "credito_total": 1500,
+      "frecuencia_ahorro": "MEDIA",
+      "nivel_endeudamiento": "CONTROLADO",
+      "pago_mensual_deudas": 150,
+      "gasto_total": 470.75,
+      "ratio_pago_deudas": 0.1500,
+      "ratio_deuda_ingreso": 1.5000,
+      "porcentaje_alimentos": 12.05,
+      "porcentaje_transporte": 5.03,
+      "porcentaje_entretenimiento": 0,
+      "porcentaje_salud": 0,
+      "porcentaje_vivienda": 0,
+      "porcentaje_educacion": 0,
+      "porcentaje_viajes": 0,
+      "porcentaje_servicios": 0,
+      "porcentaje_otros": 30
+    },
+    "transacciones_clasificadas": [],
+    "recomendaciones": []
   }
 }
 ```
@@ -149,27 +235,29 @@ Para probar el mismo endpoint desde Postman o Insomnia:
 1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
 2. Agregar el header `Content-Type: application/json`.
 3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
-4. Enviar la request y verificar que la respuesta incluya `estado`, `resumen`, `indicadores`, `resumen_gastos` y `recomendaciones`.
+4. Enviar la request y verificar que la respuesta incluya `success`, `message` y `data`.
 
-### Validaciones del análisis financiero
+### Validaciones esperadas del análisis financiero
 
 El endpoint `POST /analisis-financiero` rechaza requests incompletos o inválidos con estado `400`.
 
 Campos obligatorios:
 
+- `credito_total`: mayor o igual que cero.
 - `ingreso_mensual`: mayor que cero.
-- `ahorro_mensual`: mayor o igual que cero.
-- `deuda_total`: mayor o igual que cero.
+- `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
+- `nivel_endeudamiento`: no debe estar vacío.
 - `pago_mensual_deudas`: mayor o igual que cero.
 - `transacciones`: lista obligatoria y no vacía.
 
 Cada transacción debe incluir:
 
-- `descripcion`
-- `categoria`
+- `tipo`: debe ser `Ingreso` o `Egreso`.
+- `fecha`: fecha de la transacción.
+- `descripcion`: descripción de la transacción.
+- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito`.
+- `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
 - `monto`: mayor que cero.
-- `fecha`
-- `tipo`
 
 Ejemplo de error:
 
@@ -196,17 +284,18 @@ mvn test
 
 #### Pruebas de validación del endpoint (`POST /analisis-financiero`)
 
-Las pruebas automatizadas en `AnalisisFinancieroControllerTest` cubren y garantizan el correcto funcionamiento de las validaciones:
+Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el contrato oficial y garantizar el correcto funcionamiento de las validaciones:
 
 * **Casos Válidos:**
   * Envío de datos completos (flujo de caja estable y cálculo de indicadores).
-  * Envío de datos mínimos válidos (verificando la estructura completa de la respuesta: `estado`, `resumen`, `indicadores` y `recomendaciones`).
+  * Envío de datos mínimos válidos (verificando la estructura completa de la respuesta: `success`, `message` y `data`).
 * **Casos Inválidos (Retorno con HTTP 400 y formato de error consistente):**
   * Omitir campo financiero obligatorio (ej. sin `ingreso_mensual`).
   * Omitir múltiples campos financieros obligatorios simultáneamente.
   * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
-  * Transacción incompleta (omisión de campos obligatorios como `descripcion`, `categoria`, `fecha` y `tipo`).
-  * Transacción con datos inválidos (monto negativo, descripción vacía o fecha nula).
+  * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipo_pago` y `monto`).
+  * Transacción con datos inválidos (monto negativo, descripción vacía, fecha nula o enum inválido).
+  * Transacción con `tipo_pago: "Credito"` sin `meses_a_deber`.
   * Lista de transacciones vacía (`transacciones: []`).
   * Cuerpo de solicitud vacío o con JSON mal formado.
 
