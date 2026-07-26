@@ -90,9 +90,10 @@ El health check debe responder con estado `UP`.
 | `credito_total` | número | Obligatorio. Mayor o igual que cero. |
 | `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
 | `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
-| `nivel_endeudamiento` | número | Obligatorio. Valor entre 0 y 100, inclusive. |
 | `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
 | `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
+
+El request público no debe incluir `deuda_total` ni `nivel_endeudamiento`. Backend calcula ambos valores a partir de los datos recibidos en el request actual.
 
 #### Campos por transacción
 
@@ -116,7 +117,6 @@ curl -X POST http://localhost:8080/analisis-financiero \
     "credito_total": 1500,
     "ingreso_mensual": 1000,
     "frecuencia_ahorro": "MEDIA",
-    "nivel_endeudamiento": 25,
     "pago_mensual_deudas": 150,
     "transacciones": [
       {
@@ -174,6 +174,11 @@ Dentro de `resumen_gastos`:
 
 - gasto total por categoría: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
 
+Dentro de `transacciones_clasificadas`, toda transacción debe incluir `categoria`:
+
+- Si `tipo` es `Egreso`, `categoria` corresponde a la categoría de gasto clasificada.
+- Si `tipo` es `Ingreso`, `categoria` debe ser `ingreso`.
+
 Dentro de `indicadores`, el documento actualizado define campos como:
 
 - `ingreso_mensual`
@@ -229,6 +234,13 @@ Ejemplo parcial de response:
     },
     "transacciones_clasificadas": [
       {
+        "tipo": "Ingreso",
+        "fecha": "2026-07-01",
+        "descripcion": "Salario",
+        "monto": 1000,
+        "categoria": "ingreso"
+      },
+      {
         "tipo": "Egreso",
         "fecha": "2026-07-02",
         "descripcion": "Gas",
@@ -246,6 +258,26 @@ Ejemplo parcial de response:
 }
 ```
 
+#### Cálculos de Backend
+
+El endpoint es stateless: calcula el resultado usando únicamente el request actual, sin persistencia ni base de datos.
+
+Backend calcula:
+
+- `deuda_total`: suma de transacciones `Egreso` con `tipo_pago` igual a `Credito` dentro del request actual.
+- `nivel_endeudamiento`: `(deuda_total / credito_total) * 100`, manejando división por cero de forma segura.
+- `gasto_total`: suma de transacciones `Egreso`.
+- `resumen_gastos`: totales por categoría usando transacciones clasificadas.
+- porcentajes por categoría: proporción de cada categoría respecto al ingreso mensual o al total definido para el análisis.
+
+#### Responsabilidad Data Science vs Backend
+
+Data Science no devuelve el response HTTP completo.
+
+- Modelo o proceso de transacciones: devuelve categorías para transacciones.
+- Modelo o proceso de perfil financiero: devuelve `perfil_financiero`, `score_financiero` y `recomendaciones`.
+- Backend calcula indicadores determinísticos, orquesta los resultados y arma el response HTTP final.
+
 Para probar el mismo endpoint desde Postman o Insomnia:
 
 1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
@@ -262,7 +294,6 @@ Campos obligatorios:
 - `credito_total`: mayor o igual que cero.
 - `ingreso_mensual`: mayor que cero.
 - `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
-- `nivel_endeudamiento`: mayor o igual que 0 y menor o igual que 100.
 - `pago_mensual_deudas`: mayor o igual que cero.
 - `transacciones`: lista obligatoria y no vacía.
 
