@@ -172,7 +172,7 @@ Dentro de `data`, la respuesta incluye:
 
 Dentro de `resumen_gastos`:
 
-- gasto total por categoría: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `viajes`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+- gasto total por categoría de egreso: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia` y `otros`.
 
 Dentro de `transacciones_clasificadas`, toda transacción debe incluir `categoria`:
 
@@ -190,16 +190,16 @@ Dentro de `indicadores`, el documento actualizado define campos como:
 - `gasto_total`
 - `ratio_pago_deudas`
 - `ratio_deuda_ingreso`
-- porcentajes por categoría: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `viajes`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+- porcentajes por categoría de egreso: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia` y `otros`.
 
 Ejemplo parcial de response:
 
 ```json
 {
   "success": true,
-  "message": "Análisis financiero generado correctamente",
+  "message": "Análisis financiero generado exitosamente",
   "data": {
-    "perfil_financiero": "CONTROLADO",
+    "perfil_financiero": "estable",
     "score_financiero": 78,
     "resumen_gastos": {
       "alimentos": 120.50,
@@ -207,11 +207,11 @@ Ejemplo parcial de response:
       "salud": 0,
       "vivienda": 0,
       "educacion": 0,
-      "viajes": 0,
       "ocio_entretenimiento": 0,
-      "servicios": 0,
-      "compras": 0,
-      "otros": 300
+      "servicios": 300,
+      "ropa_calzado": 0,
+      "tecnologia": 0,
+      "otros": 0
     },
     "indicadores": {
       "ingreso_mensual": 1000,
@@ -229,11 +229,11 @@ Ejemplo parcial de response:
         "salud": 0,
         "vivienda": 0,
         "educacion": 0,
-        "viajes": 0,
         "ocio_entretenimiento": 0,
-        "servicios": 0,
-        "compras": 0,
-        "otros": 63.73
+        "servicios": 63.73,
+        "ropa_calzado": 0,
+        "tecnologia": 0,
+        "otros": 0
       }
     },
     "transacciones_clasificadas": [
@@ -251,12 +251,12 @@ Ejemplo parcial de response:
         "tipo_pago": "Credito",
         "meses_a_deber": 3,
         "monto": 300,
-        "categoria": "otros"
+        "categoria": "servicios"
       }
     ],
     "recomendaciones": [
-      "Mantener el nivel de ahorro mensual y revisar gastos recurrentes.",
-      "Monitorear el pago mensual de deudas para evitar presión financiera."
+      "Mantén protegido tu hábito de ahorro actual.",
+      "Tu presión de deuda está controlada; sigue monitoreando los gastos de crédito."
     ]
   }
 }
@@ -308,7 +308,7 @@ Cada transacción debe incluir:
 - `tipo`: debe ser `Ingreso` o `Egreso`.
 - `fecha`: fecha de la transacción.
 - `descripcion`: descripción de la transacción.
-- `tipo_pago`: debe ser `Efectivo`, `Debito` o `Credito` cuando `tipo` es `Egreso`.
+- `tipo_pago`: si está presente, debe ser `Efectivo`, `Debito` o `Credito`; es obligatorio cuando `tipo` es `Egreso`.
 - `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
 - `monto`: mayor que cero.
 
@@ -348,6 +348,7 @@ Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el 
   * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
   * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipo_pago` y `monto`).
   * Transacción con datos inválidos (monto negativo, descripción vacía, fecha nula o enum inválido).
+  * Transacción con `tipo_pago` inválido, incluso cuando `tipo` es `Ingreso`.
   * Transacción con `tipo_pago: "Credito"` sin `meses_a_deber`.
   * Lista de transacciones vacía (`transacciones: []`).
   * Cuerpo de solicitud vacío o con JSON mal formado.

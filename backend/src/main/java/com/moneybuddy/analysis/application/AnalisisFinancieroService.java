@@ -19,13 +19,13 @@ public final class AnalisisFinancieroService {
 	private static final List<String> CATEGORIAS_EGRESO = List.of(
 		"alimentos",
 		"transporte",
-		"ocio_entretenimiento",
 		"salud",
 		"vivienda",
 		"educacion",
-		"viajes",
+		"ocio_entretenimiento",
 		"servicios",
-		"compras",
+		"ropa_calzado",
+		"tecnologia",
 		"otros");
 
   	public AnalisisFinancieroResponse analizar(AnalisisFinancieroRequest request) {
@@ -147,17 +147,17 @@ public final class AnalisisFinancieroService {
 		if (containsAny(descripcion, "colegio", "universidad", "curso", "libro", "educacion")) {
 			return "educacion";
 		}
-		if (containsAny(descripcion, "viaje", "hotel", "vuelo", "pasaje", "turismo")) {
-			return "viajes";
-		}
 		if (containsAny(descripcion, "luz", "agua", "internet", "servicio", "telefono", "gas")) {
 			return "servicios";
 		}
-		if (containsAny(descripcion, "compra", "tienda", "ropa", "zapato", "electronica")) {
-			return "compras";
-		}
 		if (containsAny(descripcion, "cine", "streaming", "juego", "entretenimiento", "ocio")) {
 			return "ocio_entretenimiento";
+		}
+		if (containsAny(descripcion, "ropa", "zapato", "calzado", "accesorio", "camisa", "pantalon")) {
+			return "ropa_calzado";
+		}
+		if (containsAny(descripcion, "laptop", "notebook", "computadora", "celular", "smartphone", "electronica", "tecnologia")) {
+			return "tecnologia";
 		}
 
 		return "otros";

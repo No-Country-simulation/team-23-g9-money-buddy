@@ -15,14 +15,16 @@ public final class FinancialTransactionValidator
     	boolean valido = true;
     	contexto.disableDefaultConstraintViolation();
 
-		if (esEgreso(transaccion.tipo())) {
-			if (isBlank(transaccion.tipoPago())) {
-				agregarInfraccion(contexto, "tipo_pago", "El tipo de pago es obligatorio cuando el tipo de transacción es Egreso");
-				valido = false;
-			} else if (!esTipoPagoValido(transaccion.tipoPago())) {
-				agregarInfraccion(contexto, "tipo_pago", "El tipo de pago debe ser Efectivo, Debito o Credito");
-				valido = false;
-			}
+		boolean tipoPagoRequeridoFaltante = esEgreso(transaccion.tipo()) && isBlank(transaccion.tipoPago());
+
+		if (tipoPagoRequeridoFaltante) {
+			agregarInfraccion(contexto, "tipo_pago", "El tipo de pago es obligatorio cuando el tipo de transacción es Egreso");
+			valido = false;
+		}
+
+		if (!tipoPagoRequeridoFaltante && transaccion.tipoPago() != null && !esTipoPagoValido(transaccion.tipoPago())) {
+			agregarInfraccion(contexto, "tipo_pago", "El tipo de pago debe ser Efectivo, Debito o Credito");
+			valido = false;
 		}
 
 		if (esCredito(transaccion.tipoPago()) && transaccion.mesesADeber() == null) {

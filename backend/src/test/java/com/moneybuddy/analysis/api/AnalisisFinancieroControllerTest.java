@@ -200,7 +200,63 @@ class AnalisisFinancieroControllerTest {
     }
 
     @Test
-    void postAnalisisFinancieroUsesOfficialExpenseCategoryKeys() throws Exception {
+    void postAnalisisFinancieroRejectsInvalidTipoPagoForIngresoWhenPresent() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {
+                      "tipo": "Ingreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Salary",
+                      "tipo_pago": "Transferencia",
+                      "monto": 3000
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo_pago')].mensaje")
+                        .value("El tipo de pago debe ser Efectivo, Debito o Credito"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsBlankTipoPagoForIngresoWhenPresent() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {
+                      "tipo": "Ingreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Salary",
+                      "tipo_pago": "   ",
+                      "monto": 3000
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo_pago')].mensaje")
+                        .value("El tipo de pago debe ser Efectivo, Debito o Credito"));
+    }
+
+    @Test
+    void postAnalisisFinancieroUsesFinalOfficialCategoryKeys() throws Exception {
         String request = """
                 {
                   "ingreso_mensual": 3000,
@@ -214,10 +270,11 @@ class AnalisisFinancieroControllerTest {
                     { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Farmacia", "tipo_pago": "Efectivo", "monto": 10 },
                     { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Alquiler", "tipo_pago": "Debito", "monto": 10 },
                     { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Curso", "tipo_pago": "Efectivo", "monto": 10 },
-                    { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Hotel", "tipo_pago": "Debito", "monto": 10 },
                     { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Internet", "tipo_pago": "Efectivo", "monto": 10 },
                     { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Ropa", "tipo_pago": "Debito", "monto": 10 },
-                    { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Imprevisto", "tipo_pago": "Efectivo", "monto": 10 }
+                    { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Laptop", "tipo_pago": "Debito", "monto": 10 },
+                    { "tipo": "Egreso", "fecha": "2026-07-20", "descripcion": "Hotel", "tipo_pago": "Efectivo", "monto": 10 },
+                    { "tipo": "Ingreso", "fecha": "2026-07-20", "descripcion": "Salario", "monto": 1000 }
                   ]
                 }
                 """;
@@ -228,17 +285,30 @@ class AnalisisFinancieroControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.resumen_gastos.alimentos").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.transporte").value(10))
-                .andExpect(jsonPath("$.data.resumen_gastos.ocio_entretenimiento").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.salud").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.vivienda").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.educacion").value(10))
-                .andExpect(jsonPath("$.data.resumen_gastos.viajes").value(10))
+                .andExpect(jsonPath("$.data.resumen_gastos.ocio_entretenimiento").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.servicios").value(10))
-                .andExpect(jsonPath("$.data.resumen_gastos.compras").value(10))
+                .andExpect(jsonPath("$.data.resumen_gastos.ropa_calzado").value(10))
+                .andExpect(jsonPath("$.data.resumen_gastos.tecnologia").value(10))
                 .andExpect(jsonPath("$.data.resumen_gastos.otros").value(10))
+                .andExpect(jsonPath("$.data.resumen_gastos.viajes").doesNotExist())
+                .andExpect(jsonPath("$.data.resumen_gastos.compras").doesNotExist())
+                .andExpect(jsonPath("$.data.resumen_gastos.ingreso").doesNotExist())
                 .andExpect(jsonPath("$.data.resumen_gastos.entretenimiento").doesNotExist())
                 .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.ocio_entretenimiento").value(10.00))
-                .andExpect(jsonPath("$.data.transacciones_clasificadas[2].categoria").value("ocio_entretenimiento"));
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.ropa_calzado").value(10.00))
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.tecnologia").value(10.00))
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.otros").value(10.00))
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.viajes").doesNotExist())
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.compras").doesNotExist())
+                .andExpect(jsonPath("$.data.indicadores.porcentaje_categorias.ingreso").doesNotExist())
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[2].categoria").value("ocio_entretenimiento"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[7].categoria").value("ropa_calzado"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[8].categoria").value("tecnologia"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[9].categoria").value("otros"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[10].categoria").value("ingreso"));
     }
 
     @Test
