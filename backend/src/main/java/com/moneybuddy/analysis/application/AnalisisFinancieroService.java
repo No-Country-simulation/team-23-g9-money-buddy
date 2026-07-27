@@ -8,136 +8,256 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
 public final class AnalisisFinancieroService {
 
-  private static final BigDecimal DIEZ_POR_CIENTO = new BigDecimal("0.10");
-  private static final BigDecimal VEINTE_POR_CIENTO = new BigDecimal("0.20");
-  private static final BigDecimal TREINTA_Y_CINCO_POR_CIENTO = new BigDecimal("0.35");
-  private static final BigDecimal TRES_VECES_INGRESO = new BigDecimal("3.00");
-  private static final BigDecimal SEIS_VECES_INGRESO = new BigDecimal("6.00");
+	private static final BigDecimal CIEN = new BigDecimal("100.00");
+	private static final List<String> CATEGORIAS_EGRESO = List.of(
+		"alimentos",
+		"transporte",
+		"salud",
+		"vivienda",
+		"educacion",
+		"ocio_entretenimiento",
+		"servicios",
+		"ropa_calzado",
+		"tecnologia",
+		"otros");
 
-  public AnalisisFinancieroResponse analizar(AnalisisFinancieroRequest request) {
-    BigDecimal ingresoMensual = valueOrZero(request.ingresoMensual());
-    BigDecimal ahorroMensual = valueOrZero(request.ahorroMensual());
-    BigDecimal deudaTotal = valueOrZero(request.deudaTotal());
-    BigDecimal pagoMensualDeudas = valueOrZero(request.pagoMensualDeudas());
+  	public AnalisisFinancieroResponse analizar(AnalisisFinancieroRequest request) {
+    	BigDecimal ingresoMensual = valorOCero(request.ingresoMensual());
+    	BigDecimal creditoTotal = valorOCero(request.creditoTotal());
+    	BigDecimal pagoMensualDeudas = valorOCero(request.pagoMensualDeudas());
+    	List<AnalisisFinancieroResponse.TransaccionClasificada> transaccionesClasificadas = clasificarTransacciones(
+		request.transacciones());
 
-    BigDecimal tasaAhorro = ratio(ahorroMensual, ingresoMensual);
-    BigDecimal ratioPagoDeudas = ratio(pagoMensualDeudas, ingresoMensual);
-    BigDecimal ratioDeudaIngreso = ratio(deudaTotal, ingresoMensual);
-    BigDecimal flujoMensualEstimado = ingresoMensual.subtract(ahorroMensual).subtract(pagoMensualDeudas);
-    BigDecimal gastoTotal = gastoTotal(request.transacciones());
-    Map<String, BigDecimal> resumenGastos = resumenGastos(request.transacciones());
+		BigDecimal deudaTotal = totalPorCrédito(transaccionesClasificadas);
+		BigDecimal gastoTotal = totalPorTipo(transaccionesClasificadas, "Egreso");
+		Map<String, BigDecimal> resumenGastos = resumenGastos(transaccionesClasificadas);
+		Map<String, BigDecimal> porcentajeCategorias = porcentajeCategorias(resumenGastos, gastoTotal);
+		BigDecimal nivelEndeudamiento = porcentaje(deudaTotal, creditoTotal);
+		BigDecimal ratioPagoDeudas = ratio(pagoMensualDeudas, ingresoMensual);
+		BigDecimal ratioDeudaIngreso = ratio(deudaTotal, ingresoMensual);
+		String frecuenciaAhorro = normalizarFrecuenciaDeAhorro(request.frecuenciaAhorro());
+		int scoreFinanciero = scoreFinanciero(
+			frecuenciaAhorro, ratioPagoDeudas, ratioDeudaIngreso, nivelEndeudamiento);
+		String perfilFinanciero = perfilFinanciero(scoreFinanciero, ratioPagoDeudas, nivelEndeudamiento);
 
-    String nivelAhorro = nivelAhorro(tasaAhorro);
-    String nivelDeuda = nivelDeuda(ratioPagoDeudas, ratioDeudaIngreso);
-    String saludFinanciera = saludFinanciera(nivelAhorro, nivelDeuda, flujoMensualEstimado);
+		return new AnalisisFinancieroResponse(
+			true,
+			"Análisis financiero generado exitosamente",
+			new AnalisisFinancieroResponse.Data(
+				perfilFinanciero,
+				scoreFinanciero,
+				resumenGastos,
+				new AnalisisFinancieroResponse.Indicadores(
+					ingresoMensual,
+					deudaTotal,
+					creditoTotal,
+					nivelEndeudamiento,
+					frecuenciaAhorro,
+					pagoMensualDeudas,
+					gastoTotal,
+					ratioPagoDeudas,
+					ratioDeudaIngreso,
+					porcentajeCategorias),
+				transaccionesClasificadas,
+				recomendaciones(perfilFinanciero, frecuenciaAhorro, ratioPagoDeudas, nivelEndeudamiento)));
+	}
 
-    return new AnalisisFinancieroResponse(
-        "analisis_generado",
-        new AnalisisFinancieroResponse.Resumen(
-            saludFinanciera,
-            flujoMensualEstimado,
-            request.transacciones().size()),
-        new AnalisisFinancieroResponse.Indicadores(
-            tasaAhorro,
-            ratioPagoDeudas,
-            ratioDeudaIngreso,
-            nivelAhorro,
-            nivelDeuda,
-            gastoTotal),
-        resumenGastos,
-        recomendaciones(nivelAhorro, nivelDeuda, flujoMensualEstimado));
-  }
-
-  private BigDecimal valueOrZero(BigDecimal value) {
-    return value == null ? BigDecimal.ZERO : value;
-  }
-
-  private BigDecimal ratio(BigDecimal numerator, BigDecimal denominator) {
-    if (denominator.compareTo(BigDecimal.ZERO) <= 0) {
-      return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
-    }
-
-    return numerator.divide(denominator, 4, RoundingMode.HALF_UP);
-  }
-
-  private BigDecimal gastoTotal(List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
+  private List<AnalisisFinancieroResponse.TransaccionClasificada> clasificarTransacciones(
+      List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
     return transacciones.stream()
-        .filter(transaccion -> "gastos".equalsIgnoreCase(transaccion.tipo()))
-        .map(AnalisisFinancieroRequest.TransaccionRequest::monto)
-        .map(this::valueOrZero)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
-  }
+        .map(transaccion -> new AnalisisFinancieroResponse.TransaccionClasificada(
+            normalizarTipo(transaccion.tipo()),
+            transaccion.fecha(),
+            transaccion.descripcion(),
+            transaccion.tipoPago(),
+            transaccion.mesesADeber(),
+            valorOCero(transaccion.monto()),
+            categoria(transaccion)))
+        .toList();
+  	}
 
-  private Map<String, BigDecimal> resumenGastos(List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
-    Map<String, BigDecimal> resumen = new LinkedHashMap<>();
+	private BigDecimal totalPorCrédito(List<AnalisisFinancieroResponse.TransaccionClasificada> transacciones) {
+		return transacciones.stream()
+			.filter(transaccion -> "Egreso".equals(transaccion.tipo()))
+			.filter(transaccion -> "Credito".equalsIgnoreCase(transaccion.tipoPago()))
+			.map(AnalisisFinancieroResponse.TransaccionClasificada::monto)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
 
-    for (AnalisisFinancieroRequest.TransaccionRequest transaccion : transacciones) {
-      if (!"gastos".equalsIgnoreCase(transaccion.tipo())) {
-        continue;
-      }
+	private BigDecimal totalPorTipo(List<AnalisisFinancieroResponse.TransaccionClasificada> transacciones, String tipo) {
+		return transacciones.stream()
+			.filter(transaccion -> tipo.equals(transaccion.tipo()))
+			.map(AnalisisFinancieroResponse.TransaccionClasificada::monto)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
 
-      resumen.merge(transaccion.categoria(), valueOrZero(transaccion.monto()), BigDecimal::add);
-    }
+	private Map<String, BigDecimal> resumenGastos(List<AnalisisFinancieroResponse.TransaccionClasificada> transacciones) {
+		Map<String, BigDecimal> resumen = new LinkedHashMap<>();
+		for (String categoria : CATEGORIAS_EGRESO) {
+			resumen.put(categoria, BigDecimal.ZERO);
+		}
 
-    return Collections.unmodifiableMap(resumen);
-  }
+		for (AnalisisFinancieroResponse.TransaccionClasificada transaccion : transacciones) {
+			if (!"Egreso".equals(transaccion.tipo())) {
+				continue;
+			}
 
-  private String nivelAhorro(BigDecimal tasaAhorro) {
-    if (tasaAhorro.compareTo(VEINTE_POR_CIENTO) >= 0) {
-      return "saludable";
-    }
-    if (tasaAhorro.compareTo(DIEZ_POR_CIENTO) >= 0) {
-      return "moderado";
-    }
-    return "bajo";
-  }
+			resumen.merge(transaccion.categoria(), transaccion.monto(), BigDecimal::add);
+		}
 
-  private String nivelDeuda(BigDecimal ratioPagoDeudas, BigDecimal ratioDeudaIngreso) {
-    if (ratioPagoDeudas.compareTo(TREINTA_Y_CINCO_POR_CIENTO) > 0
-        || ratioDeudaIngreso.compareTo(SEIS_VECES_INGRESO) > 0) {
-      return "critica";
-    }
-    if (ratioPagoDeudas.compareTo(VEINTE_POR_CIENTO) > 0 || ratioDeudaIngreso.compareTo(TRES_VECES_INGRESO) > 0) {
-      return "elevada";
-    }
-    return "controlada";
-  }
+		return Collections.unmodifiableMap(resumen);
+	}
 
-  private String saludFinanciera(String nivelAhorro, String nivelDeuda, BigDecimal flujoMensualEstimado) {
-    if (flujoMensualEstimado.compareTo(BigDecimal.ZERO) < 0 || "critica".equals(nivelDeuda)) {
-      return "requiere_atencion";
-    }
-    if ("saludable".equals(nivelAhorro) && "controlada".equals(nivelDeuda)) {
-      return "estable";
-    }
-    return "requiere_mejora";
-  }
+	private Map<String, BigDecimal> porcentajeCategorias(Map<String, BigDecimal> resumenGastos, BigDecimal gastoTotal) {
+		Map<String, BigDecimal> porcentajes = new LinkedHashMap<>();
 
-  private List<String> recomendaciones(String nivelAhorro, String nivelDeuda, BigDecimal flujoMensualEstimado) {
-    List<String> recomendaciones = new ArrayList<>();
+		for (Map.Entry<String, BigDecimal> entry : resumenGastos.entrySet()) {
+			porcentajes.put(entry.getKey(), porcentaje(entry.getValue(), gastoTotal));
+		}
 
-    if ("bajo".equals(nivelAhorro)) {
-      recomendaciones.add("Aumenta el ahorro mensual hasta al menos el 10% de tus ingresos.");
-    } else {
-      recomendaciones.add("Mantén protegido el hábito de ahorro actual.");
-    }
+		return Collections.unmodifiableMap(porcentajes);
+	}
 
-    if ("critica".equals(nivelDeuda) || "elevada".equals(nivelDeuda)) {
-      recomendaciones.add("Prioriza el pago de deudas con intereses altos antes de aumentar gastos discrecionales.");
-    } else {
-      recomendaciones.add("La presión de deuda está controlada; evita asumir nuevas obligaciones recurrentes.");
-    }
+	private String categoria(AnalisisFinancieroRequest.TransaccionRequest transaccion) {
+		if ("Ingreso".equalsIgnoreCase(transaccion.tipo())) {
+			return "ingreso";
+		}
 
-    if (flujoMensualEstimado.compareTo(BigDecimal.ZERO) < 0) {
-      recomendaciones.add("Revisa los gastos fijos porque el flujo mensual estimado es negativo.");
-    }
+		String descripcion = normalizar(transaccion.descripcion());
 
-    return List.copyOf(recomendaciones);
-  }
+		if (containsAny(descripcion, "supermercado", "mercado", "comida", "restaurante", "cafe", "delivery", "alimento")) {
+			return "alimentos";
+		}
+		if (containsAny(descripcion, "bus", "taxi", "uber", "transporte", "metro", "combustible", "gasolina")) {
+			return "transporte";
+		}
+		if (containsAny(descripcion, "farmacia", "medico", "salud", "hospital", "clinica")) {
+			return "salud";
+		}
+		if (containsAny(descripcion, "alquiler", "renta", "hipoteca")) {
+			return "vivienda";
+		}
+		if (containsAny(descripcion, "colegio", "universidad", "curso", "libro", "educacion")) {
+			return "educacion";
+		}
+		if (containsAny(descripcion, "luz", "agua", "internet", "servicio", "telefono", "gas")) {
+			return "servicios";
+		}
+		if (containsAny(descripcion, "cine", "streaming", "juego", "entretenimiento", "ocio")) {
+			return "ocio_entretenimiento";
+		}
+		if (containsAny(descripcion, "ropa", "zapato", "calzado", "accesorio", "camisa", "pantalon")) {
+			return "ropa_calzado";
+		}
+		if (containsAny(descripcion, "laptop", "notebook", "computadora", "celular", "smartphone", "electronica", "tecnologia")) {
+			return "tecnologia";
+		}
+
+		return "otros";
+	}
+
+	private int scoreFinanciero(
+		String frecuenciaAhorro,
+		BigDecimal ratioPagoDeudas,
+		BigDecimal ratioDeudaIngreso,
+		BigDecimal nivelEndeudamiento) {
+			int score = switch (normalizarFrecuenciaDeAhorro(frecuenciaAhorro)) {
+				case "ALTA" -> 85;
+				case "MEDIA" -> 72;
+				case "BAJA" -> 58;
+				default -> 42;
+			};
+
+			if (ratioPagoDeudas.compareTo(new BigDecimal("0.30")) > 0) {
+				score -= 15;
+			}
+			if (ratioDeudaIngreso.compareTo(new BigDecimal("0.50")) > 0) {
+				score -= 10;
+			}
+			if (nivelEndeudamiento.compareTo(new BigDecimal("60.00")) > 0) {
+				score -= 15;
+			}
+
+		return Math.max(0, Math.min(100, score));
+  	}
+
+	private String perfilFinanciero(int scoreFinanciero, BigDecimal ratioPagoDeudas, BigDecimal nivelEndeudamiento) {
+		if (scoreFinanciero >= 75 && ratioPagoDeudas.compareTo(new BigDecimal("0.30")) <= 0) {
+			return "estable";
+		}
+		if (scoreFinanciero < 50 || nivelEndeudamiento.compareTo(new BigDecimal("70.00")) > 0) {
+			return "riesgo_alto";
+		}
+		return "requiere_atencion";
+	}
+
+	private List<String> recomendaciones(
+		String perfilFinanciero,
+		String frecuenciaAhorro,
+		BigDecimal ratioPagoDeudas,
+		BigDecimal nivelEndeudamiento) {
+		List<String> recomendaciones = new ArrayList<>();
+
+		if ("NULA".equals(normalizarFrecuenciaDeAhorro(frecuenciaAhorro)) || "BAJA".equals(normalizarFrecuenciaDeAhorro(frecuenciaAhorro))) {
+			recomendaciones.add("Aumenta tu frecuencia de ahorro antes de agregar nuevos gastos recurrentes.");
+		} else {
+			recomendaciones.add("Mantén protegido tu hábito de ahorro actual.");
+		}
+
+		if (ratioPagoDeudas.compareTo(new BigDecimal("0.30")) > 0 || nivelEndeudamiento.compareTo(new BigDecimal("60.00")) > 0) {
+			recomendaciones.add("Prioriza los pagos de crédito y evita asumir nuevas deudas.");
+		} else {
+			recomendaciones.add("Tu presión de deuda está controlada; sigue monitoreando los gastos de crédito.");
+		}
+
+		if ("riesgo_alto".equals(perfilFinanciero)) {
+			recomendaciones.add("Revisa los gastos discrecionales y arma un plan de reducción de deuda a corto plazo.");
+		}
+
+		return List.copyOf(recomendaciones);
+	}
+
+	private BigDecimal valorOCero(BigDecimal value) {
+		return value == null ? BigDecimal.ZERO : value;
+	}
+
+	private BigDecimal ratio(BigDecimal numerator, BigDecimal denominator) {
+		if (denominator.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
+		}
+
+		return numerator.divide(denominator, 4, RoundingMode.HALF_UP);
+	}
+
+	private BigDecimal porcentaje(BigDecimal numerator, BigDecimal denominator) {
+		return ratio(numerator, denominator).multiply(CIEN).setScale(2, RoundingMode.HALF_UP);
+	}
+
+	private String normalizarTipo(String tipo) {
+		return "Ingreso".equalsIgnoreCase(tipo) ? "Ingreso" : "Egreso";
+	}
+
+	private String normalizarFrecuenciaDeAhorro(String frecuenciaAhorro) {
+		return frecuenciaAhorro == null ? "NULA" : frecuenciaAhorro.toUpperCase(Locale.ROOT);
+	}
+
+	private String normalizar(String value) {
+		return value == null ? "" : value.toLowerCase(Locale.ROOT);
+	}
+
+	private boolean containsAny(String value, String... candidates) {
+		for (String candidate : candidates) {
+			if (value.contains(candidate)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

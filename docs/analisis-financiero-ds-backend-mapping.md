@@ -44,7 +44,7 @@ El MVP es stateless. El endpoint no persiste requests, no lee deuda histórica y
 | Input | `monto` | Backend envía a DS | Disponible para clasificación o resúmenes posteriores. |
 | Output | `categoria` | DS devuelve a Backend | Para `Ingreso`, la categoría DEBE ser `ingreso`. Para `Egreso`, DS devuelve una categoría de gasto. |
 
-Las categorías de gasto deben alinearse con las claves oficiales del response cuando aplique: `alimentacion`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `compras` y `otros`.
+Las categorías oficiales son `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia`, `ingreso` y `otros`. En `resumen_gastos` y `porcentaje_categorias` solo deben aparecer categorías de egreso, por lo que `ingreso` queda excluida de esos objetos.
 
 ## Mapeo del perfil financiero DS
 
@@ -144,7 +144,7 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
     {
       "tipo": "Egreso",
       "fecha": "2026-07-08",
-      "descripcion": "Cuota de laptop",
+      "descripcion": "Compra de ropa",
       "tipo_pago": "Credito",
       "meses_a_deber": 5,
       "monto": 250
@@ -158,19 +158,20 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
 ```json
 {
   "success": true,
-  "message": "Análisis financiero generado correctamente",
+  "message": "Análisis financiero generado exitosamente",
   "data": {
-    "perfil_financiero": "CONTROLADO",
+    "perfil_financiero": "estable",
     "score_financiero": 82,
     "resumen_gastos": {
-      "alimentacion": 300,
+      "alimentos": 300,
       "transporte": 0,
       "salud": 0,
       "vivienda": 0,
       "educacion": 0,
       "ocio_entretenimiento": 0,
       "servicios": 0,
-      "compras": 250,
+      "ropa_calzado": 250,
+      "tecnologia": 0,
       "otros": 0
     },
     "indicadores": {
@@ -183,15 +184,18 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
       "gasto_total": 550,
       "ratio_pago_deudas": 0.0600,
       "ratio_deuda_ingreso": 0.1250,
-      "porcentaje_alimentacion": 15,
-      "porcentaje_transporte": 0,
-      "porcentaje_salud": 0,
-      "porcentaje_vivienda": 0,
-      "porcentaje_educacion": 0,
-      "porcentaje_ocio_entretenimiento": 0,
-      "porcentaje_servicios": 0,
-      "porcentaje_compras": 12.5,
-      "porcentaje_otros": 0
+      "porcentaje_categorias": {
+        "alimentos": 54.55,
+        "transporte": 0,
+        "salud": 0,
+        "vivienda": 0,
+        "educacion": 0,
+        "ocio_entretenimiento": 0,
+        "servicios": 0,
+        "ropa_calzado": 45.45,
+        "tecnologia": 0,
+        "otros": 0
+      }
     },
     "transacciones_clasificadas": [
       {
@@ -207,21 +211,21 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
         "descripcion": "Supermercado",
         "tipo_pago": "Debito",
         "monto": 300,
-        "categoria": "alimentacion"
+        "categoria": "alimentos"
       },
       {
         "tipo": "Egreso",
         "fecha": "2026-07-08",
-        "descripcion": "Cuota de laptop",
+        "descripcion": "Compra de ropa",
         "tipo_pago": "Credito",
         "meses_a_deber": 5,
         "monto": 250,
-        "categoria": "compras"
+        "categoria": "ropa_calzado"
       }
     ],
     "recomendaciones": [
-      "Mantener el nivel de ahorro mensual y revisar gastos recurrentes.",
-      "Monitorear el pago mensual de deudas para evitar presión financiera."
+      "Mantén protegido tu hábito de ahorro actual.",
+      "Tu presión de deuda está controlada; sigue monitoreando los gastos de crédito."
     ]
   }
 }

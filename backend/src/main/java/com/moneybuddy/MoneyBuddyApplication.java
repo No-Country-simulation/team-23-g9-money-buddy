@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class MoneyBuddyApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(MoneyBuddyApplication.class, args);
-  }
+	public static void main(String[] args) {
+		SpringApplication.run(MoneyBuddyApplication.class, args);
+	}
 }

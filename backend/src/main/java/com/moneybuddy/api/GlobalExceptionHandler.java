@@ -33,9 +33,11 @@ public final class GlobalExceptionHandler {
   private static String toJsonField(FieldError error) {
     return error.getField()
         .replace("ingresoMensual", "ingreso_mensual")
-        .replace("ahorroMensual", "ahorro_mensual")
-        .replace("deudaTotal", "deuda_total")
-        .replace("pagoMensualDeudas", "pago_mensual_deudas");
+        .replace("creditoTotal", "credito_total")
+        .replace("frecuenciaAhorro", "frecuencia_ahorro")
+        .replace("pagoMensualDeudas", "pago_mensual_deudas")
+        .replace("tipoPago", "tipo_pago")
+        .replace("mesesADeber", "meses_a_deber");
   }
 
   public record ErrorResponse(String estado, List<ValidationError> errores) {

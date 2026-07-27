@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public final class AnalisisFinancieroController {
 
-  private final AnalisisFinancieroService analisisFinancieroService;
+private final AnalisisFinancieroService analisisFinancieroService;
 
-  public AnalisisFinancieroController(AnalisisFinancieroService analisisFinancieroService) {
-    this.analisisFinancieroService = analisisFinancieroService;
-  }
+	public AnalisisFinancieroController(AnalisisFinancieroService analisisFinancieroService) {
+		this.analisisFinancieroService = analisisFinancieroService;
+  	}
 
-  @PostMapping("/analisis-financiero")
-  public ResponseEntity<AnalisisFinancieroResponse> analizar(@Valid @RequestBody AnalisisFinancieroRequest request) {
-    return ResponseEntity.ok(analisisFinancieroService.analizar(request));
-  }
+  	@PostMapping("/analisis-financiero")
+  	public ResponseEntity<AnalisisFinancieroResponse> analizar(@Valid @RequestBody AnalisisFinancieroRequest request) {
+    	return ResponseEntity.ok(analisisFinancieroService.analizar(request));
+  	}
 }

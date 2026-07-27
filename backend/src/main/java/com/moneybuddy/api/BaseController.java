@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class BaseController {
 
-  @GetMapping
-  public ApiStatus status() {
-    return new ApiStatus("Money Buddy API", "ok");
-  }
+	@GetMapping
+	public ApiStatus status() {
+		return new ApiStatus("Money Buddy API", "ok");
+	}
 
-  public record ApiStatus(String service, String status) {
-  }
+	public record ApiStatus(String service, String status) {
+	}
 }
