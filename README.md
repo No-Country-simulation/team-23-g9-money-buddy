@@ -200,7 +200,7 @@ Ejemplo parcial de response:
   "message": "Análisis financiero generado exitosamente",
   "data": {
     "perfil_financiero": "estable",
-    "score_financiero": 78,
+    "score_financiero": 72,
     "resumen_gastos": {
       "alimentos": 120.50,
       "transporte": 50.25,
@@ -217,8 +217,8 @@ Ejemplo parcial de response:
       "ingreso_mensual": 1000,
       "deuda_total": 300,
       "credito_total": 1500,
-      "frecuencia_ahorro": "MEDIA",
       "nivel_endeudamiento": 20,
+      "frecuencia_ahorro": "MEDIA",
       "pago_mensual_deudas": 150,
       "gasto_total": 470.75,
       "ratio_pago_deudas": 0.1500,
@@ -238,9 +238,29 @@ Ejemplo parcial de response:
     },
     "transacciones_clasificadas": [
       {
+        "tipo": "Egreso",
+        "fecha": "2026-07-20",
+        "descripcion": "Supermercado",
+        "tipo_pago": "Debito",
+        "meses_a_deber": null,
+        "monto": 120.50,
+        "categoria": "alimentos"
+      },
+      {
+        "tipo": "Egreso",
+        "fecha": "2026-07-21",
+        "descripcion": "Transporte publico",
+        "tipo_pago": "Efectivo",
+        "meses_a_deber": null,
+        "monto": 50.25,
+        "categoria": "transporte"
+      },
+      {
         "tipo": "Ingreso",
         "fecha": "2026-07-01",
         "descripcion": "Salario",
+        "tipo_pago": null,
+        "meses_a_deber": null,
         "monto": 1000,
         "categoria": "ingreso"
       },

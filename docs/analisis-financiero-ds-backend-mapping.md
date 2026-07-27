@@ -178,8 +178,8 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
       "ingreso_mensual": 2000,
       "deuda_total": 250,
       "credito_total": 1000,
-      "frecuencia_ahorro": "MEDIA",
       "nivel_endeudamiento": 25,
+      "frecuencia_ahorro": "MEDIA",
       "pago_mensual_deudas": 120,
       "gasto_total": 550,
       "ratio_pago_deudas": 0.0600,
@@ -202,6 +202,8 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
         "tipo": "Ingreso",
         "fecha": "2026-07-01",
         "descripcion": "Salario mensual",
+        "tipo_pago": null,
+        "meses_a_deber": null,
         "monto": 2000,
         "categoria": "ingreso"
       },
@@ -210,6 +212,7 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
         "fecha": "2026-07-03",
         "descripcion": "Supermercado",
         "tipo_pago": "Debito",
+        "meses_a_deber": null,
         "monto": 300,
         "categoria": "alimentos"
       },
