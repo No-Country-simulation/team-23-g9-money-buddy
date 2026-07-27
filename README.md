@@ -215,14 +215,14 @@ Ejemplo parcial de response:
     },
     "indicadores": {
       "ingreso_mensual": 1000,
-      "deuda_total": 1500,
+      "deuda_total": 300,
       "credito_total": 1500,
       "frecuencia_ahorro": "MEDIA",
-      "nivel_endeudamiento": 30,
+      "nivel_endeudamiento": 20,
       "pago_mensual_deudas": 150,
       "gasto_total": 470.75,
       "ratio_pago_deudas": 0.1500,
-      "ratio_deuda_ingreso": 1.5000,
+      "ratio_deuda_ingreso": 0.3000,
       "porcentaje_categorias": {
         "alimentos": 25.60,
         "transporte": 10.67,
@@ -231,9 +231,9 @@ Ejemplo parcial de response:
         "educacion": 0,
         "viajes": 0,
         "ocio_entretenimiento": 0,
-        "servicios": 89.22,
+        "servicios": 0,
         "compras": 0,
-        "otros": 64.00
+        "otros": 63.73
       }
     },
     "transacciones_clasificadas": [
@@ -246,12 +246,12 @@ Ejemplo parcial de response:
       },
       {
         "tipo": "Egreso",
-        "fecha": "2026-07-02",
+        "fecha": "2026-07-10",
         "descripcion": "Gas",
         "tipo_pago": "Credito",
-        "meses_a_deber": 1,
-        "monto": 420,
-        "categoria": "servicios"
+        "meses_a_deber": 3,
+        "monto": 300,
+        "categoria": "otros"
       }
     ],
     "recomendaciones": [
@@ -281,6 +281,8 @@ Data Science no devuelve el response HTTP completo.
 - Modelo o proceso de transacciones: devuelve categorías para transacciones.
 - Modelo o proceso de perfil financiero: devuelve `perfil_financiero`, `score_financiero` y `recomendaciones`.
 - Backend calcula indicadores determinísticos, orquesta los resultados y arma el response HTTP final.
+
+La tabla detallada de mapeo entre Data Science y Backend vive en [`docs/analisis-financiero-ds-backend-mapping.md`](docs/analisis-financiero-ds-backend-mapping.md).
 
 Para probar el mismo endpoint desde Postman o Insomnia:
 
