@@ -125,6 +125,51 @@ class DatosUsuarioControllerTest {
                 .andExpect(jsonPath("$.data.frecuencia_ahorro").value("media"));
     }
 
+    @Test
+    void postDatosUsuarioIsStatelessAcrossRequests() throws Exception {
+        String firstRequest = """
+                {
+                  "ingreso_mensual": 4500,
+                  "credito_total": 20000,
+                  "frecuencia_ahorro": "MEDIA"
+                }
+                """;
+        String secondRequest = """
+                {
+                  "ingreso_mensual": 1200,
+                  "credito_total": 0,
+                  "frecuencia_ahorro": "BAJA"
+                }
+                """;
+
+        mockMvc.perform(post("/datos-usuario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(firstRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ingreso_mensual").value(4500))
+                .andExpect(jsonPath("$.data.credito_total").value(20000))
+                .andExpect(jsonPath("$.data.frecuencia_ahorro").value("MEDIA"));
+
+        mockMvc.perform(post("/datos-usuario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(secondRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ingreso_mensual").value(1200))
+                .andExpect(jsonPath("$.data.credito_total").value(0))
+                .andExpect(jsonPath("$.data.frecuencia_ahorro").value("BAJA"));
+    }
+
+    @Test
+    void postDatosUsuarioRejectsMalformedJsonBody() throws Exception {
+        mockMvc.perform(post("/datos-usuario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[0].campo").value("body"))
+                .andExpect(jsonPath("$.errores[0].mensaje").value("El cuerpo de la solicitud debe ser un JSON válido"));
+    }
+
     private static String validRequest() {
         return """
                 {
