@@ -33,13 +33,40 @@ class TransaccionesControllerTest {
                 .andExpect(jsonPath("$.data.transacciones_clasificadas", hasSize(3)))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo").value("Egreso"))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo_pago").value("Debito"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipoPago").doesNotExist())
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[0].categoria").value("alimentos"))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[1].tipo_pago").value("Credito"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[1].tipoPago").doesNotExist())
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[1].meses_a_deber").value(3))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[1].categoria").value("transporte"))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[2].tipo").value("Ingreso"))
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[2].tipo_pago").doesNotExist())
                 .andExpect(jsonPath("$.data.transacciones_clasificadas[2].categoria").value("ingreso"));
+    }
+
+    @Test
+    void postTransaccionesRejectsCamelCaseTipoPago() throws Exception {
+        String request = """
+                {
+                  "transacciones": [
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Taxi",
+                      "tipoPago": "Debito",
+                      "monto": 75
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo_pago')].mensaje")
+                        .value("El tipo de pago es obligatorio cuando el tipo de transacción es Egreso"));
     }
 
     @Test
@@ -212,6 +239,101 @@ class TransaccionesControllerTest {
                 .content(request))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.transacciones_clasificadas", hasSize(101)));
+    }
+
+    @Test
+    void postTransaccionesIsStatelessAcrossRequests() throws Exception {
+        String firstRequest = """
+                {
+                  "transacciones": [
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Supermercado",
+                      "tipo_pago": "Debito",
+                      "monto": 200
+                    }
+                  ]
+                }
+                """;
+        String secondRequest = """
+                {
+                  "transacciones": [
+                    {
+                      "tipo": "Ingreso",
+                      "fecha": "2026-07-21",
+                      "descripcion": "Salary",
+                      "monto": 3000
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(firstRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.transacciones_clasificadas", hasSize(1)))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo").value("Egreso"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].categoria").value("alimentos"));
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(secondRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.transacciones_clasificadas", hasSize(1)))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo").value("Ingreso"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].categoria").value("ingreso"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo_pago").doesNotExist());
+    }
+
+    @Test
+    void postTransaccionesRejectsInvalidTransactionDateFormat() throws Exception {
+        String request = validRequest().replace("\"2026-07-20\"", "\"20/07/2026\"");
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[0].campo").value("body"))
+                .andExpect(jsonPath("$.errores[0].mensaje").value("El cuerpo de la solicitud debe ser un JSON válido"));
+    }
+
+    @Test
+    void postTransaccionesRejectsNonPositiveMesesADeberForCredit() throws Exception {
+        String request = validRequest().replace("\"meses_a_deber\": 3", "\"meses_a_deber\": 0");
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[1].meses_a_deber')].mensaje")
+                        .value("Los meses a deber deben ser mayores que cero"));
+    }
+
+    @Test
+    void postTransaccionesRejectsDescriptionLongerThanMaximum() throws Exception {
+        String request = """
+                {
+                  "transacciones": [
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "%s",
+                      "tipo_pago": "Debito",
+                      "monto": 75
+                    }
+                  ]
+                }
+                """.formatted("a".repeat(201));
+
+        mockMvc.perform(post("/transacciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')].mensaje")
+                        .value("La descripción no puede contener más de 200 caracteres"));
     }
 
     @Test

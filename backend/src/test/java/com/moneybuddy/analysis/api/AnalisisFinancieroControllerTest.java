@@ -76,7 +76,37 @@ class AnalisisFinancieroControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo_pago").value("Debito"));
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipo_pago").value("Debito"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].tipoPago").doesNotExist());
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsCamelCaseTipoPago() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Taxi",
+                      "tipoPago": "Debito",
+                      "monto": 75
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo_pago')].mensaje")
+                        .value("El tipo de pago es obligatorio cuando el tipo de transacción es Egreso"));
     }
 
     @Test
@@ -321,6 +351,172 @@ class AnalisisFinancieroControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errores[?(@.campo == 'frecuencia_ahorro')].mensaje")
                         .value("La frecuencia de ahorro debe ser NULA, BAJA, MEDIA o ALTA"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsMissingRequiredRootFields() throws Exception {
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'ingreso_mensual')].mensaje")
+                        .value("El ingreso mensual es obligatorio"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'credito_total')].mensaje")
+                        .value("El crédito total es obligatorio"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'frecuencia_ahorro')].mensaje")
+                        .value("La frecuencia de ahorro es obligatoria"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'pago_mensual_deudas')].mensaje")
+                        .value("El pago mensual de deudas es obligatorio"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones')].mensaje")
+                        .value("La lista de transacciones es obligatoria y no puede estar vacía"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsMissingRequiredTransactionFields() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {}
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo')].mensaje")
+                        .value("El tipo de transacción es obligatorio"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].fecha')].mensaje")
+                        .value("La fecha de la transacción es obligatoria"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].descripcion')].mensaje")
+                        .value("La descripción es obligatoria"))
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].monto')].mensaje")
+                        .value("El monto es obligatorio"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsInvalidTransactionTipo() throws Exception {
+        String request = validRequest().replace("\"Egreso\"", "\"Gasto\"");
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].tipo')].mensaje")
+                        .value("El tipo de transacción debe ser Ingreso o Egreso"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsInvalidTransactionDateFormat() throws Exception {
+        String request = validRequest().replace("\"2026-07-20\"", "\"20/07/2026\"");
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.estado").value("request_invalido"))
+                .andExpect(jsonPath("$.errores[0].campo").value("body"))
+                .andExpect(jsonPath("$.errores[0].mensaje").value("El cuerpo de la solicitud debe ser un JSON válido"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsNonPositiveTransactionAmount() throws Exception {
+        String request = validRequest().replace("\"monto\": 200", "\"monto\": 0");
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[0].monto')].mensaje")
+                        .value("El monto debe ser mayor que cero"));
+    }
+
+    @Test
+    void postAnalisisFinancieroRejectsNonPositiveMesesADeberForCredit() throws Exception {
+        String request = validRequest().replace("\"meses_a_deber\": 3", "\"meses_a_deber\": 0");
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores[?(@.campo == 'transacciones[1].meses_a_deber')].mensaje")
+                        .value("Los meses a deber deben ser mayores que cero"));
+    }
+
+    @Test
+    void postAnalisisFinancieroCalculatesDebtFieldsIgnoringPublicInput() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "deuda_total": 9999,
+                  "nivel_endeudamiento": 99,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Taxi",
+                      "tipo_pago": "Credito",
+                      "meses_a_deber": 3,
+                      "monto": 250
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.indicadores.deuda_total").value(250))
+                .andExpect(jsonPath("$.data.indicadores.nivel_endeudamiento").value(25.00));
+    }
+
+    @Test
+    void postAnalisisFinancieroExcludesIncomeFromExpenseTotalsAndSummary() throws Exception {
+        String request = """
+                {
+                  "ingreso_mensual": 3000,
+                  "credito_total": 1000,
+                  "frecuencia_ahorro": "MEDIA",
+                  "pago_mensual_deudas": 100,
+                  "transacciones": [
+                    {
+                      "tipo": "Ingreso",
+                      "fecha": "2026-07-20",
+                      "descripcion": "Restaurante reimbursement",
+                      "monto": 1000
+                    },
+                    {
+                      "tipo": "Egreso",
+                      "fecha": "2026-07-21",
+                      "descripcion": "Taxi",
+                      "tipo_pago": "Debito",
+                      "monto": 50
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/analisis-financiero")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.indicadores.gasto_total").value(50))
+                .andExpect(jsonPath("$.data.resumen_gastos.alimentos").value(0))
+                .andExpect(jsonPath("$.data.resumen_gastos.transporte").value(50))
+                .andExpect(jsonPath("$.data.resumen_gastos.ingreso").doesNotExist())
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[0].categoria").value("ingreso"))
+                .andExpect(jsonPath("$.data.transacciones_clasificadas[1].categoria").value("transporte"));
     }
 
     @Test
