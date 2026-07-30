@@ -5,6 +5,10 @@ spring:
   application:
     name: money-buddy-api
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
 management:
   endpoints:
     web:

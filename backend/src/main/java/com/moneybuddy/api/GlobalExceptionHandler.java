@@ -1,5 +1,7 @@
 package com.moneybuddy.api;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -40,9 +42,15 @@ public final class GlobalExceptionHandler {
         .replace("mesesADeber", "meses_a_deber");
   }
 
-  public record ErrorResponse(String estado, List<ValidationError> errores) {
+  @Schema(description = "Respuesta estándar de error de validación.")
+  public record ErrorResponse(
+      @Schema(description = "Estado de error legible por máquina.", example = "request_invalido") String estado,
+      @ArraySchema(schema = @Schema(implementation = ValidationError.class)) List<ValidationError> errores) {
   }
 
-  public record ValidationError(String campo, String mensaje) {
+  @Schema(description = "Error de validación individual.")
+  public record ValidationError(
+      @Schema(description = "Campo JSON que no superó la validación.", example = "transacciones[0].tipo_pago") String campo,
+      @Schema(description = "Mensaje de validación.", example = "El tipo de pago es obligatorio cuando el tipo de transacción es Egreso") String mensaje) {
   }
 }
