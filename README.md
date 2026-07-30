@@ -304,6 +304,8 @@ Data Science no devuelve el response HTTP completo.
 
 La tabla detallada de mapeo entre Data Science y Backend vive en [`docs/analisis-financiero-ds-backend-mapping.md`](docs/analisis-financiero-ds-backend-mapping.md).
 
+El plan seguro para guardar artefactos del proyecto en OCI Object Storage Free Tier vive en [`docs/oci-object-storage-artefactos.md`](docs/oci-object-storage-artefactos.md).
+
 Para probar el mismo endpoint desde Postman o Insomnia:
 
 1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
