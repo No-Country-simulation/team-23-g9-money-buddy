@@ -27,7 +27,7 @@ private final AnalisisFinancieroService analisisFinancieroService;
 	@PostMapping("/analisis-financiero")
     @Operation(
         summary = "Analizar un perfil financiero",
-        description = "Valida el perfil financiero y las transacciones enviadas, clasifica gastos, calcula indicadores y devuelve recomendaciones. El endpoint no tiene estado y no persiste datos del usuario. Tipo_pago es obligatorio solo cuando el tipo de una transacción es Egreso. meses_a_deber es obligatorio cuando tipo_pago es Credito.")
+        description = "Valida el perfil financiero y las transacciones enviadas, clasifica gastos, calcula indicadores y devuelve recomendaciones. El endpoint no tiene estado y no persiste datos del usuario. deuda_total y nivel_endeudamiento son calculados por el backend. tipo_pago es obligatorio solo cuando el tipo de una transacción es Egreso. meses_a_deber es obligatorio cuando tipo_pago es Credito.")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
         required = true,
         description = "El perfil financiero que se analizará. No incluya en esta solicitud campos de respuesta calculados por el backend.",
