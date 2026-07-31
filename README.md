@@ -2,6 +2,40 @@
 
 ---
 
+## Frontend demo
+
+Dashboard demo de MoneyBuddy construido con Vite, React y TypeScript en la carpeta `frontend/`.
+
+### Requisitos locales
+
+- Node.js 22+
+- npm 11+
+
+### Ejecutar el frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+El frontend queda disponible en la URL que indique Vite, normalmente `http://localhost:5173`.
+
+Por defecto envía el análisis a `http://localhost:8080/analisis-financiero`. Para cambiar la URL base del backend, crear `frontend/.env` tomando como referencia `frontend/.env.example`:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+### Verificar el build del frontend
+
+```bash
+cd frontend
+npm run build
+```
+
+---
+
 ## Backend API
 
 API REST base de Money Buddy construida con Java 21, Spring Boot 3 y Maven.
@@ -19,13 +53,13 @@ Docker Desktop debe estar instalado y abierto antes de usar `docker compose` o `
 
 ### Qué hace Docker en este proyecto
 
-Docker crea una imagen del backend con Java y la aplicación ya empaquetada. Docker Compose usa esa imagen para iniciar el servicio en el puerto `8080`, sin depender de que cada integrante configure Maven para ejecutar la aplicación manualmente.
+Docker crea una imagen del backend con Java y la aplicación ya empaquetada. También crea una imagen del frontend con Vite y sirve los archivos estáticos con nginx. Docker Compose inicia ambos servicios sin depender de que cada integrante configure Maven o Node para ejecutar la aplicación manualmente.
 
 ### Flujo recomendado
 
 1. Clonar el repositorio o traer los últimos cambios.
 2. Entrar a la carpeta del proyecto.
-3. Levantar el backend con Docker Compose o con Maven local.
+3. Levantar backend y frontend con Docker Compose, o ejecutar cada servicio localmente.
 4. Verificar los endpoints base.
 
 ```bash
@@ -39,15 +73,19 @@ Si ya tienes el repositorio local:
 git pull
 ```
 
-### Ejecutar con Docker Compose
+### Ejecutar aplicación completa con Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
+El frontend queda disponible en `http://localhost:5173`.
+
 La API queda disponible en `http://localhost:8080`.
 
-Para detener el servicio:
+El frontend Docker se compila con `VITE_API_BASE_URL=http://localhost:8080` para que el navegador llame al backend desde tu máquina, no usando el hostname interno de Docker.
+
+Para detener los servicios:
 
 ```bash
 docker compose down
