@@ -1,17 +1,57 @@
 # Money Buddy
 
----
+Money Buddy es una aplicación para analizar información financiera personal a partir de ingresos, deudas y transacciones. El proyecto incluye una API REST con Java 21 y Spring Boot 3, y un dashboard demo construido con Vite, React y TypeScript.
 
-## Frontend demo
+## Quick start con Docker Compose
 
-Dashboard demo de MoneyBuddy construido con Vite, React y TypeScript en la carpeta `frontend/`.
+Docker Compose es el flujo recomendado para levantar la aplicación completa sin configurar Maven o Node localmente.
 
-### Requisitos locales
+### Requisitos
+
+- Git
+- Docker Desktop instalado y abierto
+
+### Ejecutar aplicación completa
+
+```bash
+git clone <url-del-repositorio>
+cd team-23-g9-money-buddy
+docker compose up --build
+```
+
+Si ya tienes el repositorio local:
+
+```bash
+git pull
+docker compose up --build
+```
+
+Servicios disponibles:
+
+| Servicio | URL |
+| --- | --- |
+| Frontend | `http://localhost:5173` |
+| API | `http://localhost:8080` |
+| Health check | `http://localhost:8080/actuator/health` |
+
+El frontend Docker se compila con `VITE_API_BASE_URL=http://localhost:8080` para que el navegador llame al backend desde tu máquina, no usando el hostname interno de Docker.
+
+Para detener los servicios:
+
+```bash
+docker compose down
+```
+
+## Desarrollo local
+
+Usa estos comandos cuando necesites ejecutar frontend o backend fuera de Docker.
+
+### Frontend
+
+Requisitos locales:
 
 - Node.js 22+
 - npm 11+
-
-### Ejecutar el frontend
 
 ```bash
 cd frontend
@@ -27,71 +67,12 @@ Por defecto envía el análisis a `http://localhost:8080/analisis-financiero`. P
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-### Verificar el build del frontend
+### Backend
 
-```bash
-cd frontend
-npm run build
-```
+Requisitos locales:
 
----
-
-## Backend API
-
-API REST base de Money Buddy construida con Java 21, Spring Boot 3 y Maven.
-
-Esta guía explica cómo levantar el backend localmente después de clonar o actualizar el repositorio.
-
-### Requisitos locales
-
-- Git
 - JDK 21
-- Maven 3.9+, si se ejecuta el backend sin Docker
-- Docker Desktop, si se ejecuta el backend con Docker en una computadora local
-
-Docker Desktop debe estar instalado y abierto antes de usar `docker compose` o `docker build`.
-
-### Qué hace Docker en este proyecto
-
-Docker crea una imagen del backend con Java y la aplicación ya empaquetada. También crea una imagen del frontend con Vite y sirve los archivos estáticos con nginx. Docker Compose inicia ambos servicios sin depender de que cada integrante configure Maven o Node para ejecutar la aplicación manualmente.
-
-### Flujo recomendado
-
-1. Clonar el repositorio o traer los últimos cambios.
-2. Entrar a la carpeta del proyecto.
-3. Levantar backend y frontend con Docker Compose, o ejecutar cada servicio localmente.
-4. Verificar los endpoints base.
-
-```bash
-git clone <url-del-repositorio>
-cd team-23-g9-money-buddy
-```
-
-Si ya tienes el repositorio local:
-
-```bash
-git pull
-```
-
-### Ejecutar aplicación completa con Docker Compose
-
-```bash
-docker compose up --build
-```
-
-El frontend queda disponible en `http://localhost:5173`.
-
-La API queda disponible en `http://localhost:8080`.
-
-El frontend Docker se compila con `VITE_API_BASE_URL=http://localhost:8080` para que el navegador llame al backend desde tu máquina, no usando el hostname interno de Docker.
-
-Para detener los servicios:
-
-```bash
-docker compose down
-```
-
-### Ejecutar con Maven local
+- Maven 3.9+
 
 ```bash
 cd backend
@@ -100,15 +81,23 @@ mvn spring-boot:run
 
 La API queda disponible en `http://localhost:8080`.
 
+## API principal
+
+`POST /analisis-financiero` recibe datos financieros en JSON y devuelve un análisis inicial con perfil financiero, score, resumen de gastos, indicadores, transacciones clasificadas y recomendaciones.
+
+El endpoint es stateless: calcula el resultado usando únicamente el request actual, sin persistencia ni base de datos.
+
+Contrato detallado: [`docs/analisis-financiero-api.md`](docs/analisis-financiero-api.md).
+
 ### Endpoints iniciales
 
-- `GET /api`: estado base de la API.
-- `POST /analisis-financiero`: recibe datos financieros en JSON y devuelve un análisis inicial.
-- `GET /actuator/health`: health check de Spring Actuator.
+| Endpoint | Uso |
+| --- | --- |
+| `GET /api` | Estado base de la API. |
+| `POST /analisis-financiero` | Análisis financiero inicial. |
+| `GET /actuator/health` | Health check de Spring Actuator. |
 
-### Verificar endpoints
-
-Con la aplicación levantada, ejecutar en otra terminal:
+Para verificar los endpoints base con la aplicación levantada:
 
 ```bash
 curl http://localhost:8080/api
@@ -117,307 +106,43 @@ curl http://localhost:8080/actuator/health
 
 El health check debe responder con estado `UP`.
 
-### Contrato `POST /analisis-financiero`
+## Validaciones
 
-#### Request
+`POST /analisis-financiero` rechaza requests incompletos o inválidos con estado `400`.
 
-#### Campos raíz
+Resumen de reglas principales:
 
-| Campo | Tipo esperado | Regla |
-| --- | --- | --- |
-| `credito_total` | número | Obligatorio. Mayor o igual que cero. |
-| `ingreso_mensual` | número | Obligatorio. Mayor que cero. |
-| `frecuencia_ahorro` | texto | Obligatorio. Valores: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
-| `pago_mensual_deudas` | número | Obligatorio. Mayor o igual que cero. |
-| `transacciones` | lista | Obligatoria. Debe incluir al menos una transacción. |
+- Los campos raíz obligatorios son `credito_total`, `ingreso_mensual`, `frecuencia_ahorro`, `pago_mensual_deudas` y `transacciones`.
+- `transacciones` debe incluir al menos una transacción.
+- Cada transacción debe incluir `tipo`, `fecha`, `descripcion` y `monto`.
+- `tipo_pago` es obligatorio cuando `tipo` es `Egreso`.
+- `meses_a_deber` es obligatorio cuando `tipo_pago` es `Credito`.
 
-El request público no debe incluir `deuda_total` ni `nivel_endeudamiento`. Backend calcula ambos valores a partir de los datos recibidos en el request actual.
+Validaciones completas y formato de error: [`docs/analisis-financiero-api.md#validaciones-esperadas`](docs/analisis-financiero-api.md#validaciones-esperadas).
 
-#### Campos por transacción
+## Pruebas
 
-| Campo | Tipo esperado | Regla |
-| --- | --- | --- |
-| `tipo` | texto | Obligatorio. Valores: `Ingreso`, `Egreso`. |
-| `fecha` | fecha | Obligatoria. Formato recomendado: `YYYY-MM-DD`. |
-| `descripcion` | texto | Obligatoria. No debe estar vacía. |
-| `tipo_pago` | texto | Condicional. Valores: `Efectivo`, `Debito`, `Credito`. Obligatorio cuando `tipo` es `Egreso`. |
-| `meses_a_deber` | número entero | Condicional. Aplica cuando `tipo_pago` es `Credito`. |
-| `monto` | número | Obligatorio. Mayor que cero. |
-
-#### Ejemplo de request válido
-
-Con la aplicación levantada, ejecutar:
-
-```bash
-curl -X POST http://localhost:8080/analisis-financiero \
-  -H "Content-Type: application/json" \
-  -d '{
-    "credito_total": 1500,
-    "ingreso_mensual": 1000,
-    "frecuencia_ahorro": "MEDIA",
-    "pago_mensual_deudas": 150,
-    "transacciones": [
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-20",
-        "descripcion": "Supermercado",
-        "tipo_pago": "Debito",
-        "monto": 120.50
-      },
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-21",
-        "descripcion": "Transporte publico",
-        "tipo_pago": "Efectivo",
-        "monto": 50.25
-      },
-      {
-        "tipo": "Ingreso",
-        "fecha": "2026-07-01",
-        "descripcion": "Salario",
-        "monto": 1000
-      },
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-10",
-        "descripcion": "Gas",
-        "tipo_pago": "Credito",
-        "meses_a_deber": 3,
-        "monto": 300
-      }
-    ]
-  }'
-```
-
-#### Response
-
-La respuesta oficial usa un wrapper con:
-
-- `success`: indica si la operación fue exitosa.
-- `message`: mensaje general de la operación.
-- `data`: objeto con el resultado del análisis financiero.
-
-Dentro de `data`, la respuesta incluye:
-
-| Campo | Descripción |
-| --- | --- |
-| `perfil_financiero` | Perfil financiero calculado para el usuario. |
-| `score_financiero` | Puntaje financiero general. |
-| `resumen_gastos` | Totales agrupados por categoría de gasto. |
-| `indicadores` | Métricas financieras calculadas a partir del request. |
-| `transacciones_clasificadas` | Transacciones procesadas y clasificadas para el análisis. |
-| `recomendaciones` | Recomendaciones financieras generadas para el usuario. |
-
-Dentro de `resumen_gastos`:
-
-- gasto total por categoría de egreso: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia` y `otros`.
-
-Dentro de `transacciones_clasificadas`, toda transacción debe incluir `categoria`:
-
-- Si `tipo` es `Egreso`, `categoria` corresponde a la categoría de gasto clasificada.
-- Si `tipo` es `Ingreso`, `categoria` debe ser `ingreso`.
-
-Dentro de `indicadores`, el documento actualizado define campos como:
-
-- `ingreso_mensual`
-- `deuda_total`
-- `credito_total`
-- `frecuencia_ahorro`
-- `nivel_endeudamiento`
-- `pago_mensual_deudas`
-- `gasto_total`
-- `ratio_pago_deudas`
-- `ratio_deuda_ingreso`
-- porcentajes por categoría de egreso: `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia` y `otros`.
-
-Ejemplo parcial de response:
-
-```json
-{
-  "success": true,
-  "message": "Análisis financiero generado exitosamente",
-  "data": {
-    "perfil_financiero": "estable",
-    "score_financiero": 72,
-    "resumen_gastos": {
-      "alimentos": 120.50,
-      "transporte": 50.25,
-      "salud": 0,
-      "vivienda": 0,
-      "educacion": 0,
-      "ocio_entretenimiento": 0,
-      "servicios": 300,
-      "ropa_calzado": 0,
-      "tecnologia": 0,
-      "otros": 0
-    },
-    "indicadores": {
-      "ingreso_mensual": 1000,
-      "deuda_total": 300,
-      "credito_total": 1500,
-      "nivel_endeudamiento": 20,
-      "frecuencia_ahorro": "MEDIA",
-      "pago_mensual_deudas": 150,
-      "gasto_total": 470.75,
-      "ratio_pago_deudas": 0.1500,
-      "ratio_deuda_ingreso": 0.3000,
-      "porcentaje_categorias": {
-        "alimentos": 25.60,
-        "transporte": 10.67,
-        "salud": 0,
-        "vivienda": 0,
-        "educacion": 0,
-        "ocio_entretenimiento": 0,
-        "servicios": 63.73,
-        "ropa_calzado": 0,
-        "tecnologia": 0,
-        "otros": 0
-      }
-    },
-    "transacciones_clasificadas": [
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-20",
-        "descripcion": "Supermercado",
-        "tipo_pago": "Debito",
-        "meses_a_deber": null,
-        "monto": 120.50,
-        "categoria": "alimentos"
-      },
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-21",
-        "descripcion": "Transporte publico",
-        "tipo_pago": "Efectivo",
-        "meses_a_deber": null,
-        "monto": 50.25,
-        "categoria": "transporte"
-      },
-      {
-        "tipo": "Ingreso",
-        "fecha": "2026-07-01",
-        "descripcion": "Salario",
-        "tipo_pago": null,
-        "meses_a_deber": null,
-        "monto": 1000,
-        "categoria": "ingreso"
-      },
-      {
-        "tipo": "Egreso",
-        "fecha": "2026-07-10",
-        "descripcion": "Gas",
-        "tipo_pago": "Credito",
-        "meses_a_deber": 3,
-        "monto": 300,
-        "categoria": "servicios"
-      }
-    ],
-    "recomendaciones": [
-      "Mantén protegido tu hábito de ahorro actual.",
-      "Tu presión de deuda está controlada; sigue monitoreando los gastos de crédito."
-    ]
-  }
-}
-```
-
-#### Cálculos de Backend
-
-El endpoint es stateless: calcula el resultado usando únicamente el request actual, sin persistencia ni base de datos.
-
-Backend calcula:
-
-- `deuda_total`: suma de transacciones `Egreso` con `tipo_pago` igual a `Credito` dentro del request actual.
-- `nivel_endeudamiento`: `(deuda_total / credito_total) * 100`, manejando división por cero de forma segura.
-- `gasto_total`: suma de transacciones `Egreso`.
-- `resumen_gastos`: totales por categoría usando transacciones clasificadas.
-- porcentajes por categoría: proporción de cada categoría respecto al gasto total de egresos del análisis.
-
-#### Responsabilidad Data Science vs Backend
-
-Data Science no devuelve el response HTTP completo.
-
-- Modelo o proceso de transacciones: devuelve categorías para transacciones.
-- Modelo o proceso de perfil financiero: devuelve `perfil_financiero`, `score_financiero` y `recomendaciones`.
-- Backend calcula indicadores determinísticos, orquesta los resultados y arma el response HTTP final.
-
-La tabla detallada de mapeo entre Data Science y Backend vive en [`docs/analisis-financiero-ds-backend-mapping.md`](docs/analisis-financiero-ds-backend-mapping.md).
-
-El plan seguro para guardar artefactos del proyecto en OCI Object Storage Free Tier vive en [`docs/oci-object-storage-artefactos.md`](docs/oci-object-storage-artefactos.md).
-
-Para probar el mismo endpoint desde Postman o Insomnia:
-
-1. Crear una request `POST` a `http://localhost:8080/analisis-financiero`.
-2. Agregar el header `Content-Type: application/json`.
-3. En el body, seleccionar JSON y pegar el mismo ejemplo usado en el comando `curl`.
-4. Enviar la request y verificar que la respuesta incluya `success`, `message` y `data`.
-
-### Validaciones esperadas del análisis financiero
-
-El endpoint `POST /analisis-financiero` rechaza requests incompletos o inválidos con estado `400`.
-
-Campos obligatorios:
-
-- `credito_total`: mayor o igual que cero.
-- `ingreso_mensual`: mayor que cero.
-- `frecuencia_ahorro`: debe ser `NULA`, `BAJA`, `MEDIA` o `ALTA`.
-- `pago_mensual_deudas`: mayor o igual que cero.
-- `transacciones`: lista obligatoria y no vacía.
-
-Cada transacción debe incluir:
-
-- `tipo`: debe ser `Ingreso` o `Egreso`.
-- `fecha`: fecha de la transacción.
-- `descripcion`: descripción de la transacción.
-- `tipo_pago`: si está presente, debe ser `Efectivo`, `Debito` o `Credito`; es obligatorio cuando `tipo` es `Egreso`.
-- `meses_a_deber`: obligatorio cuando `tipo_pago` es `Credito`.
-- `monto`: mayor que cero.
-
-Ejemplo de error:
-
-```json
-{
-  "estado": "request_invalido",
-  "errores": [
-    {
-      "campo": "transacciones[0].monto",
-      "mensaje": "El monto de la transacción debe ser mayor que cero"
-    }
-  ]
-}
-```
-
-### Ejecutar pruebas
-
-Para ejecutar las pruebas unitarias y de integración del backend:
+### Backend
 
 ```bash
 cd backend
 mvn test
 ```
 
-#### Pruebas de validación del endpoint (`POST /analisis-financiero`)
+Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el contrato oficial de `POST /analisis-financiero`, casos válidos, validaciones y errores con HTTP `400`.
 
-Las pruebas automatizadas en `AnalisisFinancieroControllerTest` deben cubrir el contrato oficial y garantizar el correcto funcionamiento de las validaciones:
+### Frontend
 
-* **Casos Válidos:**
-  * Envío de datos completos (flujo de caja estable y cálculo de indicadores).
-  * Envío de datos mínimos válidos (verificando la estructura completa de la respuesta: `success`, `message` y `data`).
-* **Casos Inválidos (Retorno con HTTP 400 y formato de error consistente):**
-  * Omitir campo financiero obligatorio (ej. sin `ingreso_mensual`).
-  * Omitir múltiples campos financieros obligatorios simultáneamente.
-  * Valor de ingreso mensual inválido (ej. `ingreso_mensual` en cero o negativo).
-  * Transacción incompleta (omisión de campos obligatorios como `tipo`, `fecha`, `descripcion`, `tipo_pago` y `monto`).
-  * Transacción con datos inválidos (monto negativo, descripción vacía, fecha nula o enum inválido).
-  * Transacción con `tipo_pago` inválido, incluso cuando `tipo` es `Ingreso`.
-  * Transacción con `tipo_pago: "Credito"` sin `meses_a_deber`.
-  * Lista de transacciones vacía (`transacciones: []`).
-  * Cuerpo de solicitud vacío o con JSON mal formado.
+El frontend no tiene un script de pruebas configurado actualmente. Para verificar compilación:
 
+```bash
+cd frontend
+npm run build
+```
 
----
+## Documentación adicional
 
-## Colaboración
-
-Antes de trabajar en el repositorio, revisa la [guía de contribución](CONTRIBUTING.md).
-
-Ahí está definido el flujo del equipo: ramas por tarea, conventional commits, Pull Requests, Code Review y vinculación con Issues del sprint.
+- [Contrato detallado de `POST /analisis-financiero`](docs/analisis-financiero-api.md)
+- [Mapeo Data Science Backend para `/analisis-financiero`](docs/analisis-financiero-ds-backend-mapping.md)
+- [OCI Object Storage Free Tier para artefactos](docs/oci-object-storage-artefactos.md)
+- [Guía de contribución](CONTRIBUTING.md)
