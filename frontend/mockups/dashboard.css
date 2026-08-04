@@ -1,0 +1,1136 @@
+/* =========================================================
+   MoneyBuddy — Finance App
+   CSS extraído del archivo de Figma (mGGvL5bZmH53xd9pkqVStr)
+   Fuentes: Plus Jakarta Sans (headings/números), Inter (texto)
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colores base */
+  --color-bg-app: #f8fafc;
+  --color-header-footer: #08303b;
+  --color-white: #ffffff;
+
+  /* Marca */
+  --color-teal: #02947e;      /* "Money" */
+  --color-green: #47ce8b;     /* "Buddy" / acentos / botones */
+  --color-green-light: #22c55e;
+
+  /* Texto / neutros */
+  --color-navy: #1e3a5f;      /* headings, valores destacados */
+  --color-slate-300: #cbd5e1;
+  --color-slate-600: #475569;
+  --color-gray-700: #374151;
+  --color-gray-500: #6b7280;
+  --color-gray-400: #9ca3af;
+  --color-gray-200: #e5e7eb;
+  --color-gray-100: #f9fafb;
+  --color-gray-border: #e5ebf0;
+  --color-blue-100: #e0f2fe;
+
+  /* Estados / categorías */
+  --color-blue: #3b82f6;
+  --color-purple: #8b5cf6;
+  --color-amber: #f59e0b;
+  --color-amber-bg: #fef3c7;
+  --color-amber-bg-2: #ffebcd;
+  --color-green-bg: #dcfce7;
+  --color-purple-bg: #ede9fe;
+
+  /* Sombras */
+  --shadow-card: 0px 1px 2px rgba(0,0,0,0.06), 0px 4px 8px rgba(0,0,0,0.04);
+  --shadow-card-sm: 0px 1px 4px rgba(0,0,0,0.06);
+
+  /* Radios */
+  --radius-card: 18px;
+  --radius-inner: 14px;
+  --radius-input: 10px;
+  --radius-pill: 999px;
+
+  /* Tipografía */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg-app);
+  color: var(--color-gray-700);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* =========================================================
+   Layout general
+   ========================================================= */
+
+.app {
+  width: 100%;
+  max-width: 1543px;
+  margin: 0 auto;
+}
+
+.main-content {
+  padding: 16px 48px 0;
+}
+
+.top-section {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.top-section .col-left,
+.top-section .col-right {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bottom-section {
+  padding: 0 48px;
+  margin-top: 16px;
+}
+
+.bottom-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.bottom-row .col-left,
+.bottom-row .col-right {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bottom-row .col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.header {
+  background: var(--color-header-footer);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header__inner {
+  width: 100%;
+  max-width: 1495px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 120px 20px 0;
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.header__logo-img {
+  width: 170px;
+  height: 141px;
+  object-fit: contain;
+}
+
+.header__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 68px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.header__title .money {
+  color: var(--color-teal);
+}
+
+.header__title .buddy {
+  color: var(--color-green);
+}
+
+.header__tagline {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--color-white);
+  padding-top: 2px;
+}
+
+.header__quote {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  width: 420px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 12px;
+}
+
+.header__quote-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.header__quote-text {
+  font-size: 15px;
+  line-height: 16.8px;
+  color: var(--color-blue-100);
+  text-align: center;
+}
+
+.header__quote-text strong {
+  font-weight: 700;
+  color: var(--color-green-light);
+}
+
+/* =========================================================
+   Tarjetas genéricas
+   ========================================================= */
+
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px;
+  width: 100%;
+}
+
+.card--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card--pad-lg {
+  padding: 18px;
+}
+
+.card__title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-navy);
+}
+
+.card__title--lg {
+  font-size: 18px;
+  line-height: 27px;
+}
+
+.card__subtitle {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 19.5px;
+  color: var(--color-gray-500);
+  padding-top: 4px;
+}
+
+/* =========================================================
+   Formulario: "Cuéntanos sobre tus finanzas"
+   ========================================================= */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 12px;
+}
+
+.form-field:first-of-type {
+  padding-top: 20px;
+}
+
+.form-field__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4.5px;
+}
+
+.form-field__icon-wrap {
+  width: 21px;
+  height: 21px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.form-field__icon-wrap--green   { background: var(--color-green-bg); }
+.form-field__icon-wrap--purple  { background: var(--color-purple-bg); }
+.form-field__icon-wrap--amber   { background: var(--color-amber-bg); }
+
+.form-field__icon-wrap img {
+  width: 14px;
+  height: 14px;
+}
+
+.form-field__label-text {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 19.5px;
+  color: var(--color-gray-700);
+}
+
+.form-field__input-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-field__prefix {
+  background: var(--color-gray-200);
+  height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7.5px 9px;
+  border-radius: 9px 0 0 9px;
+  font-weight: 600;
+  font-size: 10.5px;
+  line-height: 15px;
+  color: var(--color-gray-500);
+}
+
+.form-field__input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 43px;
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-left: none;
+  border-radius: 0 var(--radius-input) var(--radius-input) 0;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: rgba(31, 41, 55, 0.5);
+}
+
+.form-field__hint {
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-400);
+  padding-top: 2px;
+}
+
+.frequency-group {
+  display: flex;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.frequency-btn {
+  flex: 1 1 0;
+  background: var(--color-white);
+  border: 2px solid var(--color-gray-200);
+  border-radius: 9px;
+  padding: 6px 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 9px;
+  line-height: 12px;
+  color: var(--color-gray-500);
+  text-align: center;
+  cursor: pointer;
+}
+
+.frequency-btn.is-active {
+  border-color: var(--color-green);
+  color: var(--color-green);
+}
+
+/* =========================================================
+   Movimientos
+   ========================================================= */
+
+.movements-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.movements-card .card__title,
+.movements-card .card__subtitle {
+  align-self: flex-start;
+  text-align: left;
+}
+
+.movements-card__illustration {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  margin: 24px auto 0;
+}
+
+.movements-card__empty {
+  font-size: 13px;
+  line-height: 19.5px;
+  color: var(--color-gray-400);
+  padding: 24px 0 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn--outline {
+  border: 1px solid var(--color-green);
+  color: var(--color-green);
+  background: transparent;
+  border-radius: 10px;
+  height: 41px;
+  padding: 9px 16px;
+  font-size: 14px;
+  line-height: 21px;
+  margin-top: 16px;
+}
+
+.btn--primary {
+  background: var(--color-green);
+  color: var(--color-white);
+  border-radius: 12px;
+  height: 46.5px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 15px;
+  line-height: 22.5px;
+  margin-top: 16px;
+  opacity: 0.4; /* estado deshabilitado por defecto en el diseño */
+}
+
+.btn--outline .icon,
+.btn--primary .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.btn--primary .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.movements-card__privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 9px;
+}
+
+.movements-card__privacy img {
+  width: 12px;
+  height: 12px;
+}
+
+.movements-card__privacy span {
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-400);
+}
+
+/* =========================================================
+   Resumen del mes / Indicadores clave (tarjetas con gauge)
+   ========================================================= */
+
+.summary-row,
+.metrics-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.stat-card {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-inner);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card__icon--green { background: var(--color-green-bg); }
+.stat-card__icon--amber { background: var(--color-amber-bg); }
+
+.stat-card__icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.stat-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-card__label {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-gray-500);
+}
+
+.stat-card__value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 27px;
+  color: var(--color-navy);
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.gauge__track {
+  background: var(--color-gray-200);
+  height: 6px;
+  border-radius: var(--radius-pill);
+  width: 100%;
+  overflow: hidden;
+}
+
+.gauge__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.gauge__fill--green { background: var(--color-green); }
+.gauge__fill--amber { background: var(--color-amber); }
+
+.gauge__caption {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+/* metric-meses (sin gauge) */
+.metric-card__number {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 27px;
+  color: var(--color-navy);
+}
+
+.metric-card__note {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-400);
+}
+
+.value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.value-row__sub {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-gray-500);
+}
+
+/* =========================================================
+   Distribución de gastos
+   ========================================================= */
+
+.distribution-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.donut-card {
+  width: 380px;
+  height: 380px;
+  flex-shrink: 0;
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-inner);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.donut-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.donut-card__header .label { font-family: var(--font-heading); font-weight: 600; color: var(--color-gray-500); }
+.donut-card__header .total { font-family: var(--font-heading); font-weight: 700; color: var(--color-navy); }
+
+.donut {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut__chart {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--color-green) 0% 35%,
+    var(--color-navy) 35% 55%,
+    var(--color-blue) 55% 70%,
+    var(--color-purple) 70% 88%,
+    var(--color-amber) 88% 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px));
+}
+
+.donut__center {
+  position: absolute;
+  text-align: center;
+}
+
+.donut__center-label {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+.donut__center-value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--color-navy);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend__swatch--alimentacion    { background: var(--color-green); }
+.legend__swatch--transporte      { background: var(--color-navy); }
+.legend__swatch--entretenimiento { background: var(--color-blue); }
+.legend__swatch--servicios       { background: var(--color-purple); }
+.legend__swatch--otros           { background: var(--color-amber); }
+
+.legend__label {
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+.right-cards {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.avg-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-border);
+  border-radius: var(--radius-inner);
+  box-shadow: var(--shadow-card-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.avg-card__note {
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-400);
+}
+
+.top-expense-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-border);
+  border-radius: var(--radius-inner);
+  box-shadow: var(--shadow-card-sm);
+  height: 100px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-expense-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-amber-bg-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.top-expense-card__text small {
+  display: block;
+  font-size: 11px;
+  color: #667380;
+}
+
+.top-expense-card__text strong {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--color-navy);
+}
+
+/* =========================================================
+   Patrones de consumo (bar chart)
+   ========================================================= */
+
+.bar-chart {
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-inner);
+  padding: 14px;
+  width: 100%;
+}
+
+.bar-chart__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+
+.bar-chart__col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.bar-chart__bar {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+}
+
+.bar-chart__bar--efectivo { background: var(--color-navy); height: 72px; }
+.bar-chart__bar--debito   { background: var(--color-green); height: 94px; }
+.bar-chart__bar--credito  { background: var(--color-blue); height: 76px; }
+
+.bar-chart__label {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+.bar-chart__value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-navy);
+}
+
+/* =========================================================
+   Progreso de salud financiera (line chart)
+   ========================================================= */
+
+.chart-card {
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-inner);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plot-area {
+  position: relative;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  height: 220px;
+  overflow: hidden;
+}
+
+.plot-area__gridline {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  height: 1px;
+  background: var(--color-gray-200);
+}
+
+.plot-area__axis-label {
+  position: absolute;
+  left: 9px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+.plot-area__area {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.plot-area__line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.plot-area__dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+}
+
+.x-axis {
+  display: flex;
+  gap: 12px;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.x-axis__label {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16.5px;
+  color: var(--color-gray-500);
+}
+
+/* =========================================================
+   Tu perfil financiero (gauge circular + recomendaciones)
+   ========================================================= */
+
+.score {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.gauge-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.gauge-wrap__ring {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color-green) 0% 72%, var(--color-gray-200) 72% 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 16px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 16px));
+}
+
+.gauge-wrap__label {
+  position: absolute;
+  top: calc(50% - 26.5px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--color-gray-500);
+  white-space: nowrap;
+}
+
+.gauge-wrap__value {
+  position: absolute;
+  top: calc(50% - 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 36px;
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-green-bg);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.badge img {
+  width: 14px;
+  height: 14px;
+}
+
+.badge span {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--color-navy);
+}
+
+.recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.recommendations__title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 20.8px;
+  color: var(--color-navy);
+}
+
+.recommendation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recommendation__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--color-green-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recommendation__icon img {
+  width: 14px;
+  height: 14px;
+}
+
+.recommendation__text {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20.8px;
+  color: var(--color-gray-700);
+}
+
+/* =========================================================
+   Footer
+   ========================================================= */
+
+.footer {
+  background: var(--color-header-footer);
+  padding: 32px 24px;
+  margin-top: 8px;
+}
+
+.footer__icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.footer__icons img {
+  width: 16px;
+  height: 16px;
+}
+
+.footer__icons img:nth-child(2) {
+  width: 22px;
+  height: 22px;
+}
+
+.footer__tagline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 6px;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--color-slate-300);
+  text-align: center;
+}
+
+.footer__tagline strong {
+  font-weight: 700;
+  color: var(--color-green-light);
+}
+
+.footer__tagline img {
+  width: 14px;
+  height: 14px;
+}
+
+.footer__copyright {
+  text-align: center;
+  padding-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-slate-600);
+}
+
+/* =========================================================
+   Responsive (breakpoint sugerido, el diseño original es desktop-fixed)
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .top-section,
+  .bottom-row {
+    flex-direction: column;
+  }
+
+  .header__inner {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 24px;
+  }
+
+  .header__quote {
+    width: 100%;
+  }
+
+  .distribution-row {
+    flex-direction: column;
+  }
+
+  .donut-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .header__title {
+    font-size: 40px;
+  }
+
+  .header__logo-img {
+    width: 100px;
+    height: 83px;
+  }
+
+  .summary-row,
+  .metrics-row {
+    flex-direction: column;
+  }
+
+  .bar-chart__bars {
+    gap: 8px;
+  }
+}
