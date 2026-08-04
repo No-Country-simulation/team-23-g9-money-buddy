@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoneyBuddy — Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header__inner">
+      <div class="header__brand">
+        <img class="header__logo-img" src="assets/logo-moneybuddy.png" alt="Logo de MoneyBuddy">
+        <div>
+          <p class="header__title"><span class="money">Money</span><span class="buddy">Buddy</span></p>
+          <p class="header__tagline">Tu mejor aliado</p>
+        </div>
+      </div>
+      <div class="header__quote">
+        <img class="header__quote-icon" src="assets/icon-lightbulb.svg" alt="">
+        <p class="header__quote-text">Pequeñas decisiones hoy, <strong>grandes cambios mañana.</strong></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <section class="top-section">
+      <div class="col-left">
+
+        <div class="card card--pad-lg finance-form-card">
+          <h2 class="card__title card__title--lg">Cuéntanos sobre tus finanzas</h2>
+          <p class="card__subtitle">Completa los campos para realizar tu análisis.</p>
+
+          <div class="form-field">
+            <div class="form-field__label">
+              <span class="form-field__icon-wrap form-field__icon-wrap--green"><img src="assets/icon-income.svg" alt=""></span>
+              <span class="form-field__label-text">Ingreso mensual</span>
+            </div>
+            <div class="form-field__input-row">
+              <span class="form-field__prefix">₡</span>
+              <input class="form-field__input" type="text" value="0.00" aria-label="Ingreso mensual">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <div class="form-field__label">
+              <span class="form-field__icon-wrap form-field__icon-wrap--purple"><img src="assets/icon-credit-card.svg" alt=""></span>
+              <span class="form-field__label-text">Crédito total</span>
+            </div>
+            <div class="form-field__input-row">
+              <span class="form-field__prefix">₡</span>
+              <input class="form-field__input" type="text" value="0.00" aria-label="Crédito total">
+            </div>
+            <p class="form-field__hint">Límite o monto total de tus tarjetas/líneas de crédito.</p>
+          </div>
+
+          <div class="form-field">
+            <div class="form-field__label">
+              <span class="form-field__icon-wrap form-field__icon-wrap--amber"><img src="assets/icon-bank.svg" alt=""></span>
+              <span class="form-field__label-text">Pago mensual de deudas</span>
+            </div>
+            <div class="form-field__input-row">
+              <span class="form-field__prefix">₡</span>
+              <input class="form-field__input" type="text" value="0.00" aria-label="Pago mensual de deudas">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <div class="form-field__label">
+              <span class="form-field__icon-wrap form-field__icon-wrap--green"><img src="assets/icon-piggybank.svg" alt=""></span>
+              <span class="form-field__label-text">Frecuencia de ahorro</span>
+            </div>
+            <div class="frequency-group">
+              <button type="button" class="frequency-btn">Nula</button>
+              <button type="button" class="frequency-btn">Baja</button>
+              <button type="button" class="frequency-btn">Media</button>
+              <button type="button" class="frequency-btn">Alta</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card--pad-lg movements-card">
+          <h2 class="card__title">Tus movimientos</h2>
+          <p class="card__subtitle">Agrega tus ingresos y egresos del mes actual.</p>
+
+          <img class="movements-card__illustration" src="assets/mascot-capybara.png" alt="Mascota de MoneyBuddy dormida">
+          <p class="movements-card__empty">Aún no hay movimientos. ¡Agrega el primero!</p>
+
+          <button type="button" class="btn btn--outline">
+            <img class="icon" src="assets/icon-plus.svg" alt="">
+            Agregar movimiento
+          </button>
+
+          <button type="button" class="btn btn--primary">
+            <img class="icon" src="assets/icon-chart.svg" alt="">
+            Analizar mis finanzas
+          </button>
+
+          <div class="movements-card__privacy">
+            <img src="assets/icon-lock.svg" alt="">
+            <span>Tus datos están 100% seguros y privados.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-right">
+
+        <div class="card card--stack">
+          <h2 class="card__title card__title--lg">Resumen del mes</h2>
+          <div class="summary-row">
+            <div class="stat-card">
+              <div class="stat-card__top">
+                <span class="stat-card__icon stat-card__icon--green"><img src="assets/icon-receipt.svg" alt=""></span>
+                <div class="stat-card__meta">
+                  <span class="stat-card__label">Gasto total del mes</span>
+                  <span class="stat-card__value">$12,450</span>
+                </div>
+              </div>
+              <div class="gauge">
+                <div class="gauge__track"><div class="gauge__fill gauge__fill--green" style="width:65%"></div></div>
+                <span class="gauge__caption">~65% del límite</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__top">
+                <span class="stat-card__icon stat-card__icon--amber"><img src="assets/icon-alert-triangle.svg" alt=""></span>
+                <div class="stat-card__meta">
+                  <span class="stat-card__label">Total de deuda</span>
+                  <span class="stat-card__value">$28,700</span>
+                </div>
+              </div>
+              <div class="gauge">
+                <div class="gauge__track"><div class="gauge__fill gauge__fill--amber" style="width:65%"></div></div>
+                <span class="gauge__caption">~80% del límite</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card--stack">
+          <h2 class="card__title card__title--lg">Indicadores clave</h2>
+          <div class="metrics-row">
+            <div class="stat-card">
+              <span class="stat-card__label">Ratio deuda/ingreso</span>
+              <div class="value-row">
+                <span class="metric-card__number">57%</span>
+                <span class="value-row__sub">(alto)</span>
+              </div>
+              <div class="gauge__track"><div class="gauge__fill gauge__fill--green" style="width:62%"></div></div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Capacidad de ahorro</span>
+              <div class="value-row">
+                <span class="metric-card__number">18%</span>
+                <span class="value-row__sub">(media)</span>
+              </div>
+              <div class="gauge__track"><div class="gauge__fill gauge__fill--green" style="width:37%"></div></div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__label">Meses para liquidar</span>
+              <span class="metric-card__number">14</span>
+              <span class="metric-card__note">(con pago mensual actual)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card--stack">
+          <h2 class="card__title card__title--lg">Distribución de gastos</h2>
+          <div class="distribution-row">
+            <div class="donut-card">
+              <div class="donut-card__header">
+                <span class="label">Categorías</span>
+                <span class="total">100%</span>
+              </div>
+              <div class="donut">
+                <div class="donut__chart"></div>
+                <div class="donut__center">
+                  <p class="donut__center-label">Gasto</p>
+                  <p class="donut__center-value">$12,450</p>
+                </div>
+              </div>
+              <div class="legend">
+                <div class="legend__item"><span class="legend__swatch legend__swatch--alimentacion"></span><span class="legend__label">Alimentación 35%</span></div>
+                <div class="legend__item"><span class="legend__swatch legend__swatch--transporte"></span><span class="legend__label">Transporte 20%</span></div>
+                <div class="legend__item"><span class="legend__swatch legend__swatch--entretenimiento"></span><span class="legend__label">Entretenimiento 15%</span></div>
+                <div class="legend__item"><span class="legend__swatch legend__swatch--servicios"></span><span class="legend__label">Servicios 18%</span></div>
+                <div class="legend__item"><span class="legend__swatch legend__swatch--otros"></span><span class="legend__label">Otros 12%</span></div>
+              </div>
+            </div>
+            <div class="right-cards">
+              <div class="avg-card">
+                <div class="stat-card__top">
+                  <span class="stat-card__icon stat-card__icon--green"><img src="assets/icon-bar-chart.svg" alt=""></span>
+                  <div class="stat-card__meta">
+                    <span class="stat-card__label">Gasto promedio por categoría</span>
+                    <span class="stat-card__value">$2,490</span>
+                  </div>
+                </div>
+                <p class="avg-card__note">Basado en 5 categorías activas.</p>
+              </div>
+              <div class="top-expense-card">
+                <span class="top-expense-card__icon">🍽</span>
+                <div class="top-expense-card__text">
+                  <small>Tu mayor gasto son:</small>
+                  <strong>Alimentación</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="bottom-section">
+      <div class="bottom-row">
+
+        <div class="col-left">
+          <div class="card card--stack">
+            <h2 class="card__title card__title--lg">Patrones de consumo</h2>
+            <div class="bar-chart">
+              <div class="bar-chart__bars">
+                <div class="bar-chart__col">
+                  <div class="bar-chart__bar bar-chart__bar--efectivo"></div>
+                  <span class="bar-chart__label">Efectivo</span>
+                  <span class="bar-chart__value">$3,200</span>
+                </div>
+                <div class="bar-chart__col">
+                  <div class="bar-chart__bar bar-chart__bar--debito"></div>
+                  <span class="bar-chart__label">Débito</span>
+                  <span class="bar-chart__value">$5,100</span>
+                </div>
+                <div class="bar-chart__col">
+                  <div class="bar-chart__bar bar-chart__bar--credito"></div>
+                  <span class="bar-chart__label">Crédito</span>
+                  <span class="bar-chart__value">$4,150</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card--stack">
+            <h2 class="card__title card__title--lg">Progreso de salud financiera</h2>
+            <div class="chart-card">
+              <div class="plot-area">
+                <div class="plot-area__gridline" style="top:44px"></div>
+                <div class="plot-area__gridline" style="top:88px"></div>
+                <div class="plot-area__gridline" style="top:132px"></div>
+                <div class="plot-area__gridline" style="top:176px"></div>
+                <span class="plot-area__axis-label" style="top:34px">80</span>
+                <span class="plot-area__axis-label" style="top:78px">70</span>
+                <span class="plot-area__axis-label" style="top:122px">60</span>
+                <span class="plot-area__axis-label" style="top:166px">50</span>
+
+                <img class="plot-area__area" src="assets/chart-area-fill.svg" alt="">
+                <img class="plot-area__line" src="assets/chart-line.svg" alt="">
+
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:-4px;top:172px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:76px;top:140px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:156px;top:152px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:236px;top:128px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:316px;top:124px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:396px;top:100px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:476px;top:92px" alt="">
+                <img class="plot-area__dot" src="assets/chart-dot.svg" style="left:556px;top:-4px" alt="">
+              </div>
+              <div class="x-axis">
+                <span class="x-axis__label">Ene</span>
+                <span class="x-axis__label">Feb</span>
+                <span class="x-axis__label">Mar</span>
+                <span class="x-axis__label">Abr</span>
+                <span class="x-axis__label">May</span>
+                <span class="x-axis__label">Jun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-right">
+          <div class="card card--stack">
+            <h2 class="card__title card__title--lg">Tu perfil financiero</h2>
+            <div class="score">
+              <div class="gauge-wrap">
+                <div class="gauge-wrap__ring"></div>
+                <p class="gauge-wrap__label">Puntaje financiero</p>
+                <p class="gauge-wrap__value">72/100</p>
+                <div class="badge">
+                  <img src="assets/icon-shield-check.svg" alt="">
+                  <span>Moderado</span>
+                </div>
+              </div>
+            </div>
+            <div class="recommendations">
+              <p class="recommendations__title">Recomendaciones para ti</p>
+              <div class="recommendation">
+                <span class="recommendation__icon"><img src="assets/icon-check.svg" alt=""></span>
+                <p class="recommendation__text">Reduce gastos en entretenimiento un 10%</p>
+              </div>
+              <div class="recommendation">
+                <span class="recommendation__icon"><img src="assets/icon-arrow-right.svg" alt=""></span>
+                <p class="recommendation__text">Destina al menos 20% de tu ingreso al ahorro</p>
+              </div>
+              <div class="recommendation">
+                <span class="recommendation__icon"><img src="assets/icon-arrow-right.svg" alt=""></span>
+                <p class="recommendation__text">Consolida tus deudas para reducir intereses</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__icons">
+      <img src="assets/icon-leaf.svg" style="transform:rotate(-20deg)" alt="">
+      <img src="assets/icon-leaf-big.svg" alt="">
+      <img src="assets/icon-leaf.svg" style="transform:rotate(20deg)" alt="">
+    </div>
+    <p class="footer__tagline">
+      Pequeñas decisiones hoy, <strong>grandes cambios mañana.</strong>
+      <img src="assets/icon-heart-small.svg" alt="">
+    </p>
+    <p class="footer__copyright">© 2026 MoneyBuddy · Hackathon Sprint 1</p>
+  </footer>
+
+</div>
+</body>
+</html>
