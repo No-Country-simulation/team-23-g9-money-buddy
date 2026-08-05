@@ -1,11 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import accountBalanceIcon from './assets/icon-bank.svg'
+import arrowRightIcon from './assets/icon-arrow-right.svg'
 import attachMoneyIcon from './assets/icon-income.svg'
+import checkIcon from './assets/icon-check.svg'
 import creditCardIcon from './assets/icon-credit-card.svg'
 import ecoIcon from './assets/icon-leaf.svg'
 import financeIcon from './assets/icon-bar-chart.svg'
 import headerNoteIcon from './assets/icon-lightbulb.svg'
+import receiptIcon from './assets/icon-receipt.svg'
 import savingsIcon from './assets/icon-piggybank.svg'
+import shieldCheckIcon from './assets/icon-shield-check.svg'
 
 const TRANSACTION_TYPE = {
   INCOME: 'Ingreso',
@@ -37,11 +41,39 @@ const APP_STEP = {
   RESULT: 'result',
 } as const
 
+const CATEGORY_LABELS = {
+  alimentos: 'Alimentación',
+  transporte: 'Transporte',
+  salud: 'Salud',
+  vivienda: 'Vivienda',
+  educacion: 'Educación',
+  ocio_entretenimiento: 'Entretenimiento',
+  servicios: 'Servicios',
+  ropa_calzado: 'Ropa y calzado',
+  tecnologia: 'Tecnología',
+  otros: 'Otros',
+} as const
+
+const CATEGORY_COLORS = ['#25947e', '#47ce8b', '#23395e', '#4a7fd3', '#f3bf58'] as const
+
+const PAYMENT_PATTERN_KEYS = {
+  CASH: 'efectivo',
+  DEBIT: 'debito',
+  CREDIT: 'credito',
+} as const
+
+const PAYMENT_PATTERN_LABELS = {
+  [PAYMENT_PATTERN_KEYS.CASH]: 'Efectivo',
+  [PAYMENT_PATTERN_KEYS.DEBIT]: 'Débito',
+  [PAYMENT_PATTERN_KEYS.CREDIT]: 'Crédito',
+} as const
+
 type TransactionType = (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE]
 type PaymentType = (typeof PAYMENT_TYPE)[keyof typeof PAYMENT_TYPE]
 type SavingFrequency = (typeof SAVING_FREQUENCY)[keyof typeof SAVING_FREQUENCY]
 type SubmitStatus = (typeof SUBMIT_STATUS)[keyof typeof SUBMIT_STATUS]
 type AppStep = (typeof APP_STEP)[keyof typeof APP_STEP]
+type PaymentPatternKey = (typeof PAYMENT_PATTERN_KEYS)[keyof typeof PAYMENT_PATTERN_KEYS]
 
 interface FinancialFormState {
   credito_total: string
@@ -87,9 +119,37 @@ interface AnalysisState {
 }
 
 interface AnalysisMetrics {
+  ingreso_mensual: number | null
+  credito_total: number | null
+  pago_mensual_deudas: number | null
   gasto_total: number | null
   deuda_total: number | null
   nivel_endeudamiento: number | null
+  ratio_pago_deudas: number | null
+  ratio_deuda_ingreso: number | null
+}
+
+interface ClassifiedTransaction {
+  tipo: string | null
+  tipo_pago: string | null
+  monto: number | null
+  categoria: string | null
+}
+
+interface CategoryDistributionItem {
+  key: string
+  label: string
+  amount: number
+  percent: number
+  color: string
+}
+
+interface PaymentPattern {
+  key: PaymentPatternKey
+  label: string
+  amount: number
+  percent: number
+  className: string
 }
 
 interface ParsedAnalysisResult {
@@ -97,6 +157,9 @@ interface ParsedAnalysisResult {
   score: number | null
   recommendations: string[]
   metrics: AnalysisMetrics
+  expenseSummary: Record<string, number>
+  categoryPercentages: Record<string, number>
+  classifiedTransactions: ClassifiedTransaction[]
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -263,26 +326,47 @@ function getBackendErrorMessages(payload: unknown) {
   })
 }
 
-function getFinancialHeadline(response: unknown) {
-  if (!isRecord(response) || !isRecord(response.data)) {
-    return null
-  }
-
-  const profile = response.data.perfil_financiero
-  const score = response.data.score_financiero
-
-  if (typeof profile !== 'string' && typeof score !== 'number') {
-    return null
-  }
-
-  return {
-    profile: typeof profile === 'string' ? profile : 'sin perfil',
-    score: typeof score === 'number' ? score : null,
-  }
-}
-
 function getNumberField(record: Record<string, unknown>, key: string) {
   return typeof record[key] === 'number' ? record[key] : null
+}
+
+function divideOrNull(numerator: number | null, denominator: number | null) {
+  if (numerator === null || denominator === null || denominator <= 0) {
+    return null
+  }
+
+  return numerator / denominator
+}
+
+function clampPercent(value: number | null) {
+  if (value === null || !Number.isFinite(value)) {
+    return 0
+  }
+
+  return Math.min(100, Math.max(0, value))
+}
+
+function getRatioPercent(primaryRatio: number | null, fallbackRatio: number | null) {
+  const ratio = primaryRatio ?? fallbackRatio
+
+  return clampPercent(ratio === null ? null : ratio * 100)
+}
+
+function getPercentFromAmount(amount: number | null, base: number | null) {
+  const ratio = divideOrNull(amount, base)
+  return clampPercent(ratio === null ? null : ratio * 100)
+}
+
+function formatApproxPercent(value: number) {
+  return `~${toPercent(Math.round(value))}%`
+}
+
+function getMonthsToPayDebt(debt: number | null, monthlyPayment: number | null) {
+  if (debt === null || monthlyPayment === null || debt <= 0 || monthlyPayment <= 0) {
+    return null
+  }
+
+  return Math.ceil(debt / monthlyPayment)
 }
 
 function getAnalysisData(response: unknown) {
@@ -301,6 +385,143 @@ function getRecommendations(data: Record<string, unknown>) {
   return data.recomendaciones.filter((recommendation): recommendation is string => typeof recommendation === 'string')
 }
 
+function getNumericRecord(value: unknown) {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  return Object.entries(value).reduce<Record<string, number>>((record, [key, entry]) => {
+    if (typeof entry === 'number' && Number.isFinite(entry)) {
+      record[key] = entry
+    }
+
+    return record
+  }, {})
+}
+
+function getClassifiedTransactions(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap<ClassifiedTransaction>((transaction) => {
+    if (!isRecord(transaction)) {
+      return []
+    }
+
+    return [{
+      tipo: typeof transaction.tipo === 'string' ? transaction.tipo : null,
+      tipo_pago: typeof transaction.tipo_pago === 'string' ? transaction.tipo_pago : null,
+      monto: getNumberField(transaction, 'monto'),
+      categoria: typeof transaction.categoria === 'string' ? transaction.categoria : null,
+    }]
+  })
+}
+
+function getCategoryLabel(key: string) {
+  if (key in CATEGORY_LABELS) {
+    return CATEGORY_LABELS[key as keyof typeof CATEGORY_LABELS]
+  }
+
+  return key
+    .split('_')
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .join(' ')
+}
+
+function getCategoryDistribution(summary: Record<string, number>, percentages: Record<string, number>, totalExpense: number | null) {
+  const total = totalExpense && totalExpense > 0
+    ? totalExpense
+    : Object.values(summary).reduce((sum, amount) => sum + Math.max(0, amount), 0)
+
+  const positiveCategories = Object.entries(summary)
+    .filter(([, amount]) => amount > 0)
+    .sort(([, firstAmount], [, secondAmount]) => secondAmount - firstAmount)
+
+  const categories = positiveCategories.map(([key, amount]) => ({
+    key,
+    label: getCategoryLabel(key),
+    amount,
+    percent: clampPercent(percentages[key] ?? (total > 0 ? (amount / total) * 100 : 0)),
+  }))
+
+  const visibleCategories = categories.length > 5
+    ? [
+      ...categories.slice(0, 4),
+      {
+        key: 'otros_agrupados',
+        label: 'Otros',
+        amount: categories.slice(4).reduce((sum, category) => sum + category.amount, 0),
+        percent: categories.slice(4).reduce((sum, category) => sum + category.percent, 0),
+      },
+    ]
+    : categories
+
+  return visibleCategories.map<CategoryDistributionItem>((category, index) => ({
+    ...category,
+    percent: clampPercent(category.percent),
+    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+  }))
+}
+
+function getDonutBackground(categories: CategoryDistributionItem[]) {
+  if (categories.length === 0) {
+    return 'conic-gradient(#e5edf3 0 100%)'
+  }
+
+  let accumulated = 0
+  const segments = categories.map((category) => {
+    const start = accumulated
+    const end = Math.min(100, accumulated + category.percent)
+    accumulated = end
+
+    return `${category.color} ${start}% ${end}%`
+  })
+
+  if (accumulated < 100) {
+    segments.push(`#e5edf3 ${accumulated}% 100%`)
+  }
+
+  return `conic-gradient(${segments.join(', ')})`
+}
+
+function normalizePaymentPatternKey(value: string | null): PaymentPatternKey | null {
+  const normalized = value?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+  if (normalized === PAYMENT_PATTERN_KEYS.CASH || normalized === PAYMENT_PATTERN_KEYS.DEBIT || normalized === PAYMENT_PATTERN_KEYS.CREDIT) {
+    return normalized
+  }
+
+  return null
+}
+
+function getPaymentPatterns(transactions: ClassifiedTransaction[], totalExpense: number | null) {
+  const totals: Record<PaymentPatternKey, number> = {
+    [PAYMENT_PATTERN_KEYS.CASH]: 0,
+    [PAYMENT_PATTERN_KEYS.DEBIT]: 0,
+    [PAYMENT_PATTERN_KEYS.CREDIT]: 0,
+  }
+
+  transactions.forEach((transaction) => {
+    const paymentKey = normalizePaymentPatternKey(transaction.tipo_pago)
+
+    if (transaction.tipo === TRANSACTION_TYPE.EXPENSE && paymentKey && transaction.monto !== null) {
+      totals[paymentKey] += Math.max(0, transaction.monto)
+    }
+  })
+
+  const baseExpense = totalExpense && totalExpense > 0
+    ? totalExpense
+    : Object.values(totals).reduce((sum, amount) => sum + amount, 0)
+
+  return [
+    { key: PAYMENT_PATTERN_KEYS.CASH, label: PAYMENT_PATTERN_LABELS.efectivo, amount: totals.efectivo, percent: getPercentFromAmount(totals.efectivo, baseExpense), className: 'payment-pattern-cash' },
+    { key: PAYMENT_PATTERN_KEYS.DEBIT, label: PAYMENT_PATTERN_LABELS.debito, amount: totals.debito, percent: getPercentFromAmount(totals.debito, baseExpense), className: 'payment-pattern-debit' },
+    { key: PAYMENT_PATTERN_KEYS.CREDIT, label: PAYMENT_PATTERN_LABELS.credito, amount: totals.credito, percent: getPercentFromAmount(totals.credito, baseExpense), className: 'payment-pattern-credit' },
+  ] satisfies PaymentPattern[]
+}
+
 function parseAnalysisResult(response: unknown): ParsedAnalysisResult | null {
   const data = getAnalysisData(response)
 
@@ -316,10 +537,18 @@ function parseAnalysisResult(response: unknown): ParsedAnalysisResult | null {
     profile,
     score,
     recommendations: getRecommendations(data),
+    expenseSummary: getNumericRecord(data.resumen_gastos),
+    categoryPercentages: getNumericRecord(indicators.porcentaje_categorias),
+    classifiedTransactions: getClassifiedTransactions(data.transacciones_clasificadas),
     metrics: {
+      ingreso_mensual: getNumberField(indicators, 'ingreso_mensual'),
+      credito_total: getNumberField(indicators, 'credito_total'),
+      pago_mensual_deudas: getNumberField(indicators, 'pago_mensual_deudas'),
       gasto_total: getNumberField(indicators, 'gasto_total'),
       deuda_total: getNumberField(indicators, 'deuda_total'),
       nivel_endeudamiento: getNumberField(indicators, 'nivel_endeudamiento'),
+      ratio_pago_deudas: getNumberField(indicators, 'ratio_pago_deudas'),
+      ratio_deuda_ingreso: getNumberField(indicators, 'ratio_deuda_ingreso'),
     },
   }
 }
@@ -344,8 +573,32 @@ export default function App() {
 
   const requestBody = buildRequest(financialForm, movements)
   const requestPreview = JSON.stringify(requestBody, null, 2)
-  const headline = getFinancialHeadline(analysis.response)
   const parsedResult = parseAnalysisResult(analysis.response)
+  const metrics = parsedResult?.metrics
+  const monthlyExpensePercent = metrics
+    ? getPercentFromAmount(metrics.gasto_total, metrics.ingreso_mensual)
+    : 0
+  const debtPercent = metrics
+    ? clampPercent(metrics.nivel_endeudamiento ?? getPercentFromAmount(metrics.deuda_total, metrics.credito_total))
+    : 0
+  const debtIncomePercent = metrics
+    ? getRatioPercent(metrics.ratio_deuda_ingreso, divideOrNull(metrics.deuda_total, metrics.ingreso_mensual))
+    : 0
+  const debtPaymentPercent = metrics
+    ? getRatioPercent(metrics.ratio_pago_deudas, divideOrNull(metrics.pago_mensual_deudas, metrics.ingreso_mensual))
+    : 0
+  const monthsToPayDebt = metrics ? getMonthsToPayDebt(metrics.deuda_total, metrics.pago_mensual_deudas) : null
+  const monthsVisualPercent = clampPercent(monthsToPayDebt === null ? null : (monthsToPayDebt / 24) * 100)
+  const scorePercent = clampPercent(parsedResult?.score ?? null)
+  const categoryDistribution = parsedResult
+    ? getCategoryDistribution(parsedResult.expenseSummary, parsedResult.categoryPercentages, metrics?.gasto_total ?? null)
+    : []
+  const donutBackground = getDonutBackground(categoryDistribution)
+  const averageCategoryExpense = categoryDistribution.length > 0
+    ? categoryDistribution.reduce((sum, category) => sum + category.amount, 0) / categoryDistribution.length
+    : 0
+  const highestExpenseCategory = categoryDistribution[0]?.label ?? 'Sin datos'
+  const paymentPatterns = parsedResult ? getPaymentPatterns(parsedResult.classifiedTransactions, metrics?.gasto_total ?? null) : []
   const isSubmitting = analysis.status === SUBMIT_STATUS.LOADING
   const reachedMovementLimit = !editingMovementId && movements.length >= MAX_MOVEMENTS
 
@@ -771,60 +1024,188 @@ export default function App() {
                 <img className="analysis-icon-badge" src={ecoIcon} alt="" />
               </span>
               <div>
-                <p className="eyebrow">Análisis listo</p>
                 <h1>Tu resultado financiero</h1>
-                {headline ? (
-                  <p>
-                    Perfil <strong>{headline.profile}</strong>
-                    {headline.score !== null ? ` · Score ${headline.score}/100` : ''}
-                  </p>
-                ) : (
-                  <p>El backend respondió correctamente. Podés revisar el detalle técnico abajo.</p>
-                )}
               </div>
             </div>
 
             {parsedResult ? (
               <>
-                <div className="result-summary-grid">
-                  <div className="result-metric highlight-metric">
-                    <span>Perfil financiero</span>
-                    <strong>{parsedResult.profile ?? 'No informado'}</strong>
-                  </div>
-                  <div className="result-metric highlight-metric">
-                    <span>Score financiero</span>
-                    <strong>{parsedResult.score !== null ? `${parsedResult.score}/100` : 'No informado'}</strong>
-                  </div>
-                  {parsedResult.metrics.gasto_total !== null ? (
-                    <div className="result-metric">
-                      <span>Gasto total</span>
-                      <strong>{toMoney(parsedResult.metrics.gasto_total)}</strong>
-                    </div>
-                  ) : null}
-                  {parsedResult.metrics.deuda_total !== null ? (
-                    <div className="result-metric">
-                      <span>Deuda total</span>
-                      <strong>{toMoney(parsedResult.metrics.deuda_total)}</strong>
-                    </div>
-                  ) : null}
-                  {parsedResult.metrics.nivel_endeudamiento !== null ? (
-                    <div className="result-metric">
-                      <span>Nivel de endeudamiento</span>
-                      <strong>{toPercent(parsedResult.metrics.nivel_endeudamiento)}%</strong>
-                    </div>
-                  ) : null}
-                </div>
+                <div className="result-dashboard">
+                  <div className="result-column result-column-left">
+                    <section className="result-panel" aria-labelledby="monthly-summary-title">
+                      <div className="result-panel-heading">
+                        <h2 id="monthly-summary-title">Resumen del mes</h2>
+                      </div>
 
-                {parsedResult.recommendations.length > 0 ? (
-                  <section className="recommendation-panel" aria-labelledby="recommendations-title">
-                    <h2 id="recommendations-title">Recomendaciones para vos</h2>
-                    <ul>
-                      {parsedResult.recommendations.map((recommendation) => (
-                        <li key={recommendation}>{recommendation}</li>
-                      ))}
-                    </ul>
-                  </section>
-                ) : null}
+                      <div className="summary-kpis">
+                        <article className="summary-kpi">
+                          <div className="summary-kpi-top">
+                            <span className="summary-kpi-icon summary-kpi-icon-green" aria-hidden="true">
+                              <img src={receiptIcon} alt="" />
+                            </span>
+                            <span>Gasto total del mes</span>
+                          </div>
+                          <strong>{metrics?.gasto_total !== null ? toMoney(metrics?.gasto_total ?? 0) : 'No informado'}</strong>
+                          <div className="progress-track" aria-hidden="true">
+                            <span style={{ width: `${monthlyExpensePercent}%` }} />
+                          </div>
+                          <small>{formatApproxPercent(monthlyExpensePercent)} del ingreso mensual</small>
+                        </article>
+
+                        <article className="summary-kpi">
+                          <div className="summary-kpi-top">
+                            <span className="summary-kpi-icon summary-kpi-icon-amber" aria-hidden="true">
+                              <img src={accountBalanceIcon} alt="" />
+                            </span>
+                            <span>Total de deuda</span>
+                          </div>
+                          <strong>{metrics?.deuda_total !== null ? toMoney(metrics?.deuda_total ?? 0) : 'No informado'}</strong>
+                          <div className="progress-track progress-track-amber" aria-hidden="true">
+                            <span style={{ width: `${debtPercent}%` }} />
+                          </div>
+                          <small>{formatApproxPercent(debtPercent)} del crédito total</small>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section className="result-panel" aria-labelledby="key-indicators-title">
+                      <div className="result-panel-heading">
+                        <h2 id="key-indicators-title">Indicadores clave</h2>
+                      </div>
+
+                      <div className="indicator-grid">
+                        <article className="indicator-card">
+                          <span>Ratio deuda/ingreso</span>
+                          <strong>{formatApproxPercent(debtIncomePercent)}</strong>
+                          <div className="progress-track" aria-hidden="true">
+                            <span style={{ width: `${debtIncomePercent}%` }} />
+                          </div>
+                        </article>
+
+                        <article className="indicator-card">
+                          <span>Pago de deudas</span>
+                          <strong>{formatApproxPercent(debtPaymentPercent)}</strong>
+                          <div className="progress-track" aria-hidden="true">
+                            <span style={{ width: `${debtPaymentPercent}%` }} />
+                          </div>
+                        </article>
+
+                        <article className="indicator-card">
+                          <span>Meses para liquidar</span>
+                          <strong>{monthsToPayDebt === null ? '--' : monthsToPayDebt}</strong>
+                          <div className="progress-track progress-track-blue" aria-hidden="true">
+                            <span style={{ width: `${monthsVisualPercent}%` }} />
+                          </div>
+                          <small>Con pago mensual actual. Escala visual: 24 meses = 100%.</small>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section className="result-panel expense-distribution-panel" aria-labelledby="expense-distribution-title">
+                      <div className="result-panel-heading">
+                        <h2 id="expense-distribution-title">Distribución de gastos</h2>
+                      </div>
+
+                      <div className="expense-distribution-layout">
+                        <div className="expense-donut-card">
+                          <div className="expense-donut-header">
+                            <span>Categorías</span>
+                          </div>
+                          <div
+                            className="expense-donut"
+                            style={{ background: donutBackground }}
+                            role="img"
+                            aria-label={`Distribución de gastos por categoría. Total: ${toMoney(metrics?.gasto_total ?? 0)}.`}
+                          >
+                            <div>
+                              <small>Gasto</small>
+                              <strong>{toMoney(metrics?.gasto_total ?? 0)}</strong>
+                            </div>
+                          </div>
+
+                          {categoryDistribution.length > 0 ? (
+                            <ul className="expense-legend" aria-label="Categorías de gasto">
+                              {categoryDistribution.map((category) => (
+                                <li key={category.key}>
+                                  <span className="legend-dot" style={{ background: category.color }} aria-hidden="true" />
+                                  <span>{category.label} {toPercent(Math.round(category.percent))}%</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="empty-list">No hay categorías de gasto para mostrar.</p>
+                          )}
+                        </div>
+
+                        <div className="expense-highlights">
+                          <article>
+                            <span>Gasto promedio por categoría</span>
+                            <strong>{toMoney(averageCategoryExpense)}</strong>
+                          </article>
+                          <article>
+                            <span>Tu mayor gasto son:</span>
+                            <strong>{highestExpenseCategory}</strong>
+                          </article>
+                        </div>
+                      </div>
+                    </section>
+
+                  </div>
+
+                  <aside className="result-column result-column-right" aria-label="Perfil y recomendaciones">
+                    <section className="profile-panel" aria-labelledby="profile-title">
+                      <h2 id="profile-title">Tu perfil financiero</h2>
+                      <div className="score-ring" style={{ background: `conic-gradient(#47ce8b ${scorePercent}%, #e5edf3 0)` }}>
+                        <div>
+                          <small>Puntaje financiero</small>
+                          <span>{parsedResult.score !== null ? parsedResult.score : '--'}</span>
+                          <small>/100</small>
+                        </div>
+                      </div>
+                      <span className="profile-badge">
+                        <img src={shieldCheckIcon} alt="" aria-hidden="true" />
+                        {parsedResult.profile ?? 'No informado'}
+                      </span>
+
+                      <div className="recommendation-panel" aria-labelledby="recommendations-title">
+                        <h3 id="recommendations-title">Recomendaciones para ti</h3>
+                        {parsedResult.recommendations.length > 0 ? (
+                          <ul>
+                            {parsedResult.recommendations.map((recommendation, index) => (
+                              <li key={recommendation}>
+                                <span aria-hidden="true">
+                                  <img src={index === 0 ? checkIcon : arrowRightIcon} alt="" />
+                                </span>
+                                <p>{recommendation}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="empty-list">El backend no envió recomendaciones para este análisis.</p>
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="result-panel consumption-patterns-panel" aria-labelledby="consumption-patterns-title">
+                      <div className="result-panel-heading">
+                        <h2 id="consumption-patterns-title">Patrones de consumo</h2>
+                      </div>
+
+                      <div className="payment-pattern-grid">
+                        {paymentPatterns.map((pattern) => (
+                          <article className={`payment-pattern ${pattern.className}`} key={pattern.key}>
+                            <div className="payment-bar" aria-hidden="true">
+                              <span style={{ height: `${pattern.percent}%` }} />
+                            </div>
+                            <span>{pattern.label}</span>
+                            <strong>{toMoney(pattern.amount)}</strong>
+                            <small>{formatApproxPercent(pattern.percent)} del gasto total</small>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  </aside>
+                </div>
               </>
             ) : (
               <div className="empty-list">No se encontró el bloque `data` esperado en la respuesta.</div>
