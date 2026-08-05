@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import accountBalanceIcon from './assets/account_balance.svg'
-import attachMoneyIcon from './assets/attach_money.svg'
-import creditCardIcon from './assets/credit_card.svg'
-import ecoIcon from './assets/eco.svg'
-import financeIcon from './assets/finance.svg'
-import headerNoteIcon from './assets/header-note-icon.svg'
-import savingsIcon from './assets/savings.svg'
+import accountBalanceIcon from './assets/icon-bank.svg'
+import attachMoneyIcon from './assets/icon-income.svg'
+import creditCardIcon from './assets/icon-credit-card.svg'
+import ecoIcon from './assets/icon-leaf.svg'
+import financeIcon from './assets/icon-bar-chart.svg'
+import headerNoteIcon from './assets/icon-lightbulb.svg'
+import savingsIcon from './assets/icon-piggybank.svg'
 
 const TRANSACTION_TYPE = {
   INCOME: 'Ingreso',
@@ -32,10 +32,16 @@ const SUBMIT_STATUS = {
   ERROR: 'error',
 } as const
 
+const APP_STEP = {
+  FORM: 'form',
+  RESULT: 'result',
+} as const
+
 type TransactionType = (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE]
 type PaymentType = (typeof PAYMENT_TYPE)[keyof typeof PAYMENT_TYPE]
 type SavingFrequency = (typeof SAVING_FREQUENCY)[keyof typeof SAVING_FREQUENCY]
 type SubmitStatus = (typeof SUBMIT_STATUS)[keyof typeof SUBMIT_STATUS]
+type AppStep = (typeof APP_STEP)[keyof typeof APP_STEP]
 
 interface FinancialFormState {
   credito_total: string
@@ -78,6 +84,19 @@ interface AnalysisState {
   status: SubmitStatus
   response: unknown
   errors: string[]
+}
+
+interface AnalysisMetrics {
+  gasto_total: number | null
+  deuda_total: number | null
+  nivel_endeudamiento: number | null
+}
+
+interface ParsedAnalysisResult {
+  profile: string | null
+  score: number | null
+  recommendations: string[]
+  metrics: AnalysisMetrics
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
@@ -262,7 +281,57 @@ function getFinancialHeadline(response: unknown) {
   }
 }
 
+function getNumberField(record: Record<string, unknown>, key: string) {
+  return typeof record[key] === 'number' ? record[key] : null
+}
+
+function getAnalysisData(response: unknown) {
+  if (!isRecord(response) || !isRecord(response.data)) {
+    return null
+  }
+
+  return response.data
+}
+
+function getRecommendations(data: Record<string, unknown>) {
+  if (!Array.isArray(data.recomendaciones)) {
+    return []
+  }
+
+  return data.recomendaciones.filter((recommendation): recommendation is string => typeof recommendation === 'string')
+}
+
+function parseAnalysisResult(response: unknown): ParsedAnalysisResult | null {
+  const data = getAnalysisData(response)
+
+  if (!data) {
+    return null
+  }
+
+  const indicators = isRecord(data.indicadores) ? data.indicadores : {}
+  const profile = typeof data.perfil_financiero === 'string' ? data.perfil_financiero : null
+  const score = typeof data.score_financiero === 'number' ? data.score_financiero : null
+
+  return {
+    profile,
+    score,
+    recommendations: getRecommendations(data),
+    metrics: {
+      gasto_total: getNumberField(indicators, 'gasto_total'),
+      deuda_total: getNumberField(indicators, 'deuda_total'),
+      nivel_endeudamiento: getNumberField(indicators, 'nivel_endeudamiento'),
+    },
+  }
+}
+
+function toPercent(value: number) {
+  return new Intl.NumberFormat('es-AR', {
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export default function App() {
+  const [currentStep, setCurrentStep] = useState<AppStep>(APP_STEP.FORM)
   const [financialForm, setFinancialForm] = useState<FinancialFormState>(initialFinancialForm)
   const [movementForm, setMovementForm] = useState<MovementFormState>(initialMovementForm)
   const [movements, setMovements] = useState<Movement[]>(initialMovements)
@@ -276,6 +345,7 @@ export default function App() {
   const requestBody = buildRequest(financialForm, movements)
   const requestPreview = JSON.stringify(requestBody, null, 2)
   const headline = getFinancialHeadline(analysis.response)
+  const parsedResult = parseAnalysisResult(analysis.response)
   const isSubmitting = analysis.status === SUBMIT_STATUS.LOADING
   const reachedMovementLimit = !editingMovementId && movements.length >= MAX_MOVEMENTS
 
@@ -347,6 +417,7 @@ export default function App() {
 
     if (validationErrors.length > 0) {
       setAnalysis({ status: SUBMIT_STATUS.ERROR, response: null, errors: validationErrors })
+      setCurrentStep(APP_STEP.FORM)
       return
     }
 
@@ -368,10 +439,12 @@ export default function App() {
           errors:
             backendErrors.length > 0 ? backendErrors : [`El backend respondió con estado ${response.status}.`],
         })
+        setCurrentStep(APP_STEP.FORM)
         return
       }
 
       setAnalysis({ status: SUBMIT_STATUS.SUCCESS, response: payload, errors: [] })
+      setCurrentStep(APP_STEP.RESULT)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo completar la solicitud.'
       setAnalysis({
@@ -379,7 +452,21 @@ export default function App() {
         response: null,
         errors: [`${message} Revisá si el backend está levantado en ${API_BASE_URL}.`],
       })
+      setCurrentStep(APP_STEP.FORM)
     }
+  }
+
+  function handleEditAnalysis() {
+    setCurrentStep(APP_STEP.FORM)
+  }
+
+  function handleNewAnalysis() {
+    setFinancialForm(initialFinancialForm)
+    setMovementForm(initialMovementForm)
+    setMovements(initialMovements)
+    setEditingMovementId(null)
+    setAnalysis({ status: SUBMIT_STATUS.IDLE, response: null, errors: [] })
+    setCurrentStep(APP_STEP.FORM)
   }
 
   return (
@@ -387,7 +474,7 @@ export default function App() {
       <header className="hero-header">
         <a className="brand" href="#top" aria-label="Ir al inicio de Money Buddy">
           <span className="brand-mark" aria-hidden="true">
-            <img src={savingsIcon} alt="" />
+            <img src="/logo-moneybuddy.png" alt="" />
           </span>
           <span>
             <small>Tu mejor aliado</small>
@@ -405,8 +492,15 @@ export default function App() {
         </p>
       </header>
 
-      <main id="top" className="dashboard" aria-label="Dashboard de análisis financiero">
-        <section className="left-column" aria-label="Datos para analizar">
+      <main id="top" className="flow" aria-label="Flujo de análisis financiero">
+        <nav className="step-indicator" aria-label="Progreso del análisis">
+          <span className={currentStep === APP_STEP.FORM ? 'is-active' : ''}>1. Datos financieros</span>
+          <span className={currentStep === APP_STEP.RESULT ? 'is-active' : ''}>2. Resultado</span>
+        </nav>
+
+        {currentStep === APP_STEP.FORM ? (
+        <section className="form-step" aria-label="Datos para analizar">
+          <div className="left-column">
           <article className="card finance-card">
             <div className="section-heading">
               <h1>Cuéntanos sobre tus finanzas</h1>
@@ -596,7 +690,10 @@ export default function App() {
 
             <div className="movement-list" aria-live="polite">
               {movements.length === 0 ? (
-                <p className="empty-list">Aún no hay movimientos. ¡Agregá el primero!</p>
+                <>
+                  <img className="movements-mascot" src="/mascot-capybara.png" alt="Mascota de MoneyBuddy" />
+                  <p className="empty-list">Aún no hay movimientos. ¡Agregá el primero!</p>
+                </>
               ) : (
                 movements.map((movement) => (
                   <article className="movement-item" key={movement.id}>
@@ -623,32 +720,11 @@ export default function App() {
               )}
             </div>
 
-            <button className="primary-button" type="button" disabled={isSubmitting} onClick={handleSubmitAnalysis}>
-              {isSubmitting ? 'Analizando…' : 'Analizar mis finanzas'}
-            </button>
-            <p className="privacy-note">Tus datos están 100% seguros y privados.</p>
           </article>
-        </section>
+          </div>
 
-        <aside className="right-column" aria-label="Resultado del análisis">
-          <article className="card analysis-card">
-            {analysis.status === SUBMIT_STATUS.SUCCESS ? (
-              <div className="analysis-result">
-                <span className="analysis-icon" aria-hidden="true">
-                  <img className="analysis-icon-main" src={financeIcon} alt="" />
-                  <img className="analysis-icon-badge" src={ecoIcon} alt="" />
-                </span>
-                <h2>Análisis recibido</h2>
-                {headline ? (
-                  <p>
-                    Perfil <strong>{headline.profile}</strong>
-                    {headline.score !== null ? ` · Score ${headline.score}` : ''}
-                  </p>
-                ) : (
-                  <p>El backend respondió correctamente.</p>
-                )}
-              </div>
-            ) : (
+          <aside className="right-column" aria-label="Estado de la solicitud">
+            <article className="card analysis-card">
               <div className="analysis-empty">
                 <span className="analysis-icon" aria-hidden="true">
                   <img className="analysis-icon-main" src={financeIcon} alt="" />
@@ -656,38 +732,127 @@ export default function App() {
                 </span>
                 <h2>Aún no tenemos tu análisis.</h2>
                 <p>Completá tus datos y presioná “Analizar mis finanzas” para descubrir tu salud financiera.</p>
+                <button className="primary-button" type="button" disabled={isSubmitting} onClick={handleSubmitAnalysis}>
+                  {isSubmitting ? 'Analizando…' : 'Analizar mis finanzas'}
+                </button>
+                <p className="privacy-note">Tus datos están 100% seguros y privados.</p>
               </div>
-            )}
 
-            {analysis.status === SUBMIT_STATUS.ERROR ? (
-              <div className="error-box" role="alert" aria-live="polite">
-                <strong>Revisá estos puntos antes de analizar.</strong>
-                <ul>
-                  {analysis.errors.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+              {analysis.status === SUBMIT_STATUS.ERROR ? (
+                <div className="error-box" role="alert" aria-live="polite">
+                  <strong>Revisá estos puntos antes de analizar.</strong>
+                  <ul>
+                    {analysis.errors.map((error) => (
+                      <li key={error}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
-            <div className="json-panel">
-              <div className="json-panel-header">
-                <strong>Request JSON demo</strong>
-                <span>POST {API_BASE_URL}/analisis-financiero</span>
+              <details className="technical-details request-details">
+                <summary>Ver request JSON demo</summary>
+                <div className="json-panel">
+                  <div className="json-panel-header">
+                    <strong>Request JSON demo</strong>
+                    <span>POST {API_BASE_URL}/analisis-financiero</span>
+                  </div>
+                  <pre tabIndex={0}>{requestPreview}</pre>
+                </div>
+              </details>
+            </article>
+          </aside>
+        </section>
+        ) : (
+        <section className="result-step" aria-label="Resultado del análisis financiero">
+          <article className="card result-card">
+            <div className="result-hero">
+              <span className="analysis-icon" aria-hidden="true">
+                <img className="analysis-icon-main" src={financeIcon} alt="" />
+                <img className="analysis-icon-badge" src={ecoIcon} alt="" />
+              </span>
+              <div>
+                <p className="eyebrow">Análisis listo</p>
+                <h1>Tu resultado financiero</h1>
+                {headline ? (
+                  <p>
+                    Perfil <strong>{headline.profile}</strong>
+                    {headline.score !== null ? ` · Score ${headline.score}/100` : ''}
+                  </p>
+                ) : (
+                  <p>El backend respondió correctamente. Podés revisar el detalle técnico abajo.</p>
+                )}
               </div>
-              <pre tabIndex={0}>{requestPreview}</pre>
             </div>
 
-            {analysis.status === SUBMIT_STATUS.SUCCESS ? (
-              <div className="json-panel response-panel">
-                <div className="json-panel-header">
-                  <strong>Respuesta del backend</strong>
+            {parsedResult ? (
+              <>
+                <div className="result-summary-grid">
+                  <div className="result-metric highlight-metric">
+                    <span>Perfil financiero</span>
+                    <strong>{parsedResult.profile ?? 'No informado'}</strong>
+                  </div>
+                  <div className="result-metric highlight-metric">
+                    <span>Score financiero</span>
+                    <strong>{parsedResult.score !== null ? `${parsedResult.score}/100` : 'No informado'}</strong>
+                  </div>
+                  {parsedResult.metrics.gasto_total !== null ? (
+                    <div className="result-metric">
+                      <span>Gasto total</span>
+                      <strong>{toMoney(parsedResult.metrics.gasto_total)}</strong>
+                    </div>
+                  ) : null}
+                  {parsedResult.metrics.deuda_total !== null ? (
+                    <div className="result-metric">
+                      <span>Deuda total</span>
+                      <strong>{toMoney(parsedResult.metrics.deuda_total)}</strong>
+                    </div>
+                  ) : null}
+                  {parsedResult.metrics.nivel_endeudamiento !== null ? (
+                    <div className="result-metric">
+                      <span>Nivel de endeudamiento</span>
+                      <strong>{toPercent(parsedResult.metrics.nivel_endeudamiento)}%</strong>
+                    </div>
+                  ) : null}
                 </div>
-                <pre tabIndex={0}>{JSON.stringify(analysis.response, null, 2)}</pre>
-              </div>
+
+                {parsedResult.recommendations.length > 0 ? (
+                  <section className="recommendation-panel" aria-labelledby="recommendations-title">
+                    <h2 id="recommendations-title">Recomendaciones para vos</h2>
+                    <ul>
+                      {parsedResult.recommendations.map((recommendation) => (
+                        <li key={recommendation}>{recommendation}</li>
+                      ))}
+                    </ul>
+                  </section>
+                ) : null}
+              </>
+            ) : (
+              <div className="empty-list">No se encontró el bloque `data` esperado en la respuesta.</div>
+            )}
+
+            {analysis.status === SUBMIT_STATUS.SUCCESS ? (
+              <details className="technical-details">
+                <summary>Ver JSON técnico</summary>
+                <div className="json-panel response-panel">
+                  <div className="json-panel-header">
+                    <strong>Respuesta del backend</strong>
+                  </div>
+                  <pre tabIndex={0}>{JSON.stringify(analysis.response, null, 2)}</pre>
+                </div>
+              </details>
             ) : null}
+
+            <div className="result-actions">
+              <button className="secondary-button" type="button" onClick={handleEditAnalysis}>
+                Volver y editar datos
+              </button>
+              <button className="ghost-button" type="button" onClick={handleNewAnalysis}>
+                Iniciar nuevo análisis
+              </button>
+            </div>
           </article>
-        </aside>
+        </section>
+        )}
       </main>
 
       <footer className="footer">
