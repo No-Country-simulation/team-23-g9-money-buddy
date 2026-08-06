@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import accountBalanceIcon from './assets/icon-bank.svg'
 import alimentosIcon from './assets/alimentos.svg'
+import alertTriangleIcon from './assets/icon-alert-triangle.svg'
 import arrowRightIcon from './assets/icon-arrow-right.svg'
 import attachMoneyIcon from './assets/icon-income.svg'
 import checkIcon from './assets/icon-check.svg'
@@ -13,6 +14,7 @@ import ocioEntretenimientoIcon from './assets/ocio-entretenimiento.svg'
 import otrosIcon from './assets/otros.svg'
 import receiptIcon from './assets/icon-receipt.svg'
 import ropaCalzadoIcon from './assets/ropa-calzado.svg'
+import riesgoAltoIcon from './assets/riesgo-alto.svg'
 import saludIcon from './assets/salud.svg'
 import serviciosIcon from './assets/servicios.svg'
 import savingsIcon from './assets/icon-piggybank.svg'
@@ -91,6 +93,27 @@ const CATEGORY_ICONS = {
 } as const
 
 const FALLBACK_CATEGORY_COLOR = '#94a3b8'
+
+const PROFILE_STATE = {
+  HIGH_RISK: 'riesgo_alto',
+  NEEDS_ATTENTION: 'requiere_atencion',
+  STABLE: 'estable',
+} as const
+
+const PROFILE_VISUALS = {
+  [PROFILE_STATE.HIGH_RISK]: {
+    color: '#ef4444',
+    icon: riesgoAltoIcon,
+  },
+  [PROFILE_STATE.NEEDS_ATTENTION]: {
+    color: '#f59e0b',
+    icon: alertTriangleIcon,
+  },
+  [PROFILE_STATE.STABLE]: {
+    color: '#47ce8b',
+    icon: shieldCheckIcon,
+  },
+} as const
 
 const PAYMENT_PATTERN_KEYS = {
   CASH: 'efectivo',
@@ -482,6 +505,36 @@ function getCategoryIcon(key: string) {
   return CATEGORY_ICONS.otros
 }
 
+function normalizeProfileState(profile: string | null) {
+  return profile?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() ?? null
+}
+
+function getProfileVisuals(profile: string | null, score: number | null) {
+  const normalizedProfile = normalizeProfileState(profile)
+
+  if (normalizedProfile === PROFILE_STATE.HIGH_RISK) {
+    return PROFILE_VISUALS[PROFILE_STATE.HIGH_RISK]
+  }
+
+  if (normalizedProfile === PROFILE_STATE.NEEDS_ATTENTION) {
+    return PROFILE_VISUALS[PROFILE_STATE.NEEDS_ATTENTION]
+  }
+
+  if (normalizedProfile === PROFILE_STATE.STABLE) {
+    return PROFILE_VISUALS[PROFILE_STATE.STABLE]
+  }
+
+  if (score !== null && score < 50) {
+    return PROFILE_VISUALS[PROFILE_STATE.HIGH_RISK]
+  }
+
+  if (score !== null && score < 70) {
+    return PROFILE_VISUALS[PROFILE_STATE.NEEDS_ATTENTION]
+  }
+
+  return PROFILE_VISUALS[PROFILE_STATE.STABLE]
+}
+
 function getCategoryDistribution(summary: Record<string, number>, percentages: Record<string, number>, totalExpense: number | null) {
   const total = totalExpense && totalExpense > 0
     ? totalExpense
@@ -648,6 +701,9 @@ export default function App() {
   const monthsToPayDebt = metrics ? getMonthsToPayDebt(metrics.deuda_total, metrics.pago_mensual_deudas) : null
   const monthsVisualPercent = clampPercent(monthsToPayDebt === null ? null : (monthsToPayDebt / 24) * 100)
   const scorePercent = clampPercent(parsedResult?.score ?? null)
+  const profileVisuals = parsedResult
+    ? getProfileVisuals(parsedResult.profile, parsedResult.score)
+    : PROFILE_VISUALS[PROFILE_STATE.STABLE]
   const categoryDistribution = parsedResult
     ? getCategoryDistribution(parsedResult.expenseSummary, parsedResult.categoryPercentages, metrics?.gasto_total ?? null)
     : []
@@ -1225,7 +1281,7 @@ export default function App() {
                   <aside className="result-column result-column-right" aria-label="Perfil y recomendaciones">
                     <section className="profile-panel" aria-labelledby="profile-title">
                       <h2 id="profile-title">Tu perfil financiero</h2>
-                      <div className="score-ring" style={{ background: `conic-gradient(#47ce8b ${scorePercent}%, #e5edf3 0)` }}>
+                      <div className="score-ring" style={{ background: `conic-gradient(${profileVisuals.color} ${scorePercent}%, #e5edf3 0)` }}>
                         <div>
                           <small>Puntaje financiero</small>
                           <span>{parsedResult.score !== null ? parsedResult.score : '--'}</span>
@@ -1233,7 +1289,7 @@ export default function App() {
                         </div>
                       </div>
                       <span className="profile-badge">
-                        <img src={shieldCheckIcon} alt="" aria-hidden="true" />
+                        <img src={profileVisuals.icon} alt="" aria-hidden="true" />
                         {parsedResult.profile ?? 'No informado'}
                       </span>
 
