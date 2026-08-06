@@ -1,15 +1,25 @@
 import { useState, type FormEvent } from 'react'
 import accountBalanceIcon from './assets/icon-bank.svg'
+import alimentosIcon from './assets/alimentos.svg'
 import arrowRightIcon from './assets/icon-arrow-right.svg'
 import attachMoneyIcon from './assets/icon-income.svg'
 import checkIcon from './assets/icon-check.svg'
 import creditCardIcon from './assets/icon-credit-card.svg'
 import ecoIcon from './assets/icon-leaf.svg'
+import educacionIcon from './assets/educacion.svg'
 import financeIcon from './assets/icon-bar-chart.svg'
 import headerNoteIcon from './assets/icon-lightbulb.svg'
+import ocioEntretenimientoIcon from './assets/ocio-entretenimiento.svg'
+import otrosIcon from './assets/otros.svg'
 import receiptIcon from './assets/icon-receipt.svg'
+import ropaCalzadoIcon from './assets/ropa-calzado.svg'
+import saludIcon from './assets/salud.svg'
+import serviciosIcon from './assets/servicios.svg'
 import savingsIcon from './assets/icon-piggybank.svg'
 import shieldCheckIcon from './assets/icon-shield-check.svg'
+import tecnologiaIcon from './assets/tecnologia.svg'
+import transporteIcon from './assets/transporte.svg'
+import viviendaIcon from './assets/vivienda.svg'
 
 const TRANSACTION_TYPE = {
   INCOME: 'Ingreso',
@@ -54,7 +64,33 @@ const CATEGORY_LABELS = {
   otros: 'Otros',
 } as const
 
-const CATEGORY_COLORS = ['#25947e', '#47ce8b', '#23395e', '#4a7fd3', '#f3bf58'] as const
+const CATEGORY_COLORS = {
+  alimentos: '#47ce8b',
+  transporte: '#23395e',
+  salud: '#ef4444',
+  vivienda: '#14b8a6',
+  educacion: '#6366f1',
+  ocio_entretenimiento: '#3b82f6',
+  servicios: '#8b5cf6',
+  ropa_calzado: '#ec4899',
+  tecnologia: '#0ea5e9',
+  otros: '#f59e0b',
+} as const
+
+const CATEGORY_ICONS = {
+  alimentos: alimentosIcon,
+  transporte: transporteIcon,
+  salud: saludIcon,
+  vivienda: viviendaIcon,
+  educacion: educacionIcon,
+  ocio_entretenimiento: ocioEntretenimientoIcon,
+  servicios: serviciosIcon,
+  ropa_calzado: ropaCalzadoIcon,
+  tecnologia: tecnologiaIcon,
+  otros: otrosIcon,
+} as const
+
+const FALLBACK_CATEGORY_COLOR = '#94a3b8'
 
 const PAYMENT_PATTERN_KEYS = {
   CASH: 'efectivo',
@@ -430,6 +466,22 @@ function getCategoryLabel(key: string) {
     .join(' ')
 }
 
+function getCategoryColor(key: string) {
+  if (key in CATEGORY_COLORS) {
+    return CATEGORY_COLORS[key as keyof typeof CATEGORY_COLORS]
+  }
+
+  return FALLBACK_CATEGORY_COLOR
+}
+
+function getCategoryIcon(key: string) {
+  if (key in CATEGORY_ICONS) {
+    return CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS]
+  }
+
+  return CATEGORY_ICONS.otros
+}
+
 function getCategoryDistribution(summary: Record<string, number>, percentages: Record<string, number>, totalExpense: number | null) {
   const total = totalExpense && totalExpense > 0
     ? totalExpense
@@ -446,22 +498,28 @@ function getCategoryDistribution(summary: Record<string, number>, percentages: R
     percent: clampPercent(percentages[key] ?? (total > 0 ? (amount / total) * 100 : 0)),
   }))
 
-  const visibleCategories = categories.length > 5
-    ? [
-      ...categories.slice(0, 4),
-      {
-        key: 'otros_agrupados',
-        label: 'Otros',
-        amount: categories.slice(4).reduce((sum, category) => sum + category.amount, 0),
-        percent: categories.slice(4).reduce((sum, category) => sum + category.percent, 0),
-      },
-    ]
-    : categories
+  const nonOtherCategories = categories.filter((category) => category.key !== 'otros')
+  const otherCategory = categories.find((category) => category.key === 'otros')
+  const groupedCategories = categories.length > 5
+    ? nonOtherCategories.slice(0, 4)
+    : nonOtherCategories
+  const otherCategories = categories.length > 5
+    ? [...nonOtherCategories.slice(4), ...(otherCategory ? [otherCategory] : [])]
+    : otherCategory ? [otherCategory] : []
+  const groupedOther = otherCategories.length > 0
+    ? {
+      key: 'otros',
+      label: 'Otros',
+      amount: otherCategories.reduce((sum, category) => sum + category.amount, 0),
+      percent: otherCategories.reduce((sum, category) => sum + category.percent, 0),
+    }
+    : null
+  const visibleCategories = groupedOther ? [...groupedCategories, groupedOther] : groupedCategories
 
-  return visibleCategories.map<CategoryDistributionItem>((category, index) => ({
+  return visibleCategories.map<CategoryDistributionItem>((category) => ({
     ...category,
     percent: clampPercent(category.percent),
-    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    color: getCategoryColor(category.key),
   }))
 }
 
@@ -597,7 +655,9 @@ export default function App() {
   const averageCategoryExpense = categoryDistribution.length > 0
     ? categoryDistribution.reduce((sum, category) => sum + category.amount, 0) / categoryDistribution.length
     : 0
-  const highestExpenseCategory = categoryDistribution[0]?.label ?? 'Sin datos'
+  const highestExpenseCategory = categoryDistribution[0]
+  const highestExpenseCategoryLabel = highestExpenseCategory?.label ?? 'Sin datos'
+  const highestExpenseCategoryIcon = getCategoryIcon(highestExpenseCategory?.key ?? 'otros')
   const paymentPatterns = parsedResult ? getPaymentPatterns(parsedResult.classifiedTransactions, metrics?.gasto_total ?? null) : []
   const isSubmitting = analysis.status === SUBMIT_STATUS.LOADING
   const reachedMovementLimit = !editingMovementId && movements.length >= MAX_MOVEMENTS
@@ -1139,12 +1199,22 @@ export default function App() {
 
                         <div className="expense-highlights">
                           <article>
-                            <span>Gasto promedio por categoría</span>
-                            <strong>{toMoney(averageCategoryExpense)}</strong>
+                            <span className="expense-highlight-icon" aria-hidden="true">
+                              <img src={financeIcon} alt="" />
+                            </span>
+                            <div>
+                              <span>Gasto promedio por categoría</span>
+                              <strong>{toMoney(averageCategoryExpense)}</strong>
+                            </div>
                           </article>
                           <article>
-                            <span>Tu mayor gasto son:</span>
-                            <strong>{highestExpenseCategory}</strong>
+                            <span className="expense-highlight-icon expense-highlight-icon-category" aria-hidden="true">
+                              <img src={highestExpenseCategoryIcon} alt="" />
+                            </span>
+                            <div>
+                              <span>Tu mayor gasto son:</span>
+                              <strong>{highestExpenseCategoryLabel}</strong>
+                            </div>
                           </article>
                         </div>
                       </div>
