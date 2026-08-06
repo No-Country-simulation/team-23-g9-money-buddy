@@ -597,7 +597,7 @@ pre:focus-visible {
 
 .result-hero {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
   padding-bottom: 4px;
@@ -1150,6 +1150,8 @@ pre:focus-visible {
 .result-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  justify-self: end;
   gap: 10px;
 }
 
@@ -1363,8 +1365,14 @@ pre {
   }
 
   .row-actions,
-  .form-actions {
+  .form-actions,
+  .result-actions {
     width: 100%;
+  }
+
+  .result-actions {
+    justify-content: stretch;
+    justify-self: stretch;
   }
 
   .row-actions button,

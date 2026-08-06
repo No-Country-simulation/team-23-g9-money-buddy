@@ -1142,6 +1142,15 @@ export default function App() {
               <div>
                 <h1>Tu resultado financiero</h1>
               </div>
+
+              <div className="result-actions">
+                <button className="secondary-button" type="button" onClick={handleEditAnalysis}>
+                  Volver y editar datos
+                </button>
+                <button className="ghost-button" type="button" onClick={handleNewAnalysis}>
+                  Iniciar nuevo análisis
+                </button>
+              </div>
             </div>
 
             {parsedResult ? (
@@ -1348,15 +1357,6 @@ export default function App() {
                 </div>
               </details>
             ) : null}
-
-            <div className="result-actions">
-              <button className="secondary-button" type="button" onClick={handleEditAnalysis}>
-                Volver y editar datos
-              </button>
-              <button className="ghost-button" type="button" onClick={handleNewAnalysis}>
-                Iniciar nuevo análisis
-              </button>
-            </div>
           </article>
         </section>
         )}
