@@ -1,26 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
 :root {
-  --teal-950: #0f303b;
+  --teal-950: #08303b;
   --teal-900: #103d45;
   --teal-800: #174e57;
-  --green-500: #25947e;
+  --green-500: #02947e;
   --green-300: #eda9a9;
-  --blue-900: #23395e;
-  --ink: #23395e;
+  --green-accent: #47ce8b;
+  --green-light: #22c55e;
+  --blue-900: #08303b;
+  --ink: #1e3a5f;
   --muted: #6b7280;
-  --line: #dfe6ee;
+  --line: #e5e7eb;
   --surface: #ffffff;
-  --surface-soft: #f4f7fa;
+  --surface-soft: #f8fafc;
   --danger: #d94343;
-  --warning: #d68610;
-  --shadow: 0 18px 45px rgba(26, 47, 74, 0.12);
-  --radius-lg: 24px;
+  --warning: #f59e0b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --radius-lg: 18px;
   --radius-md: 14px;
-  font-family:
-    Avenir Next,
-    Nunito Sans,
-    Segoe UI,
-    system-ui,
-    sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  font-family: var(--font-body);
   color: var(--ink);
   background: var(--surface-soft);
   font-synthesis: none;
@@ -36,6 +38,9 @@
 body {
   margin: 0;
   min-width: 320px;
+  font-family: var(--font-body);
+  color: #374151;
+  background: var(--surface-soft);
 }
 
 button,
@@ -65,9 +70,7 @@ pre:focus-visible {
 
 .app-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(49, 215, 119, 0.12), transparent 26rem),
-    linear-gradient(180deg, #f8fbfd 0%, #f1f5f8 62%, #edf3f6 100%);
+  background: var(--surface-soft);
 }
 
 .hero-header {
@@ -75,7 +78,7 @@ pre:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 22px clamp(20px, 8vw, 96px);
+  padding: 20px clamp(20px, 8vw, 96px);
   background: var(--teal-950);
   color: #e8fff3;
 }
@@ -95,23 +98,27 @@ pre:focus-visible {
 
 .brand small {
   color: #d8eee9;
+  font-family: var(--font-body);
   font-size: 0.82rem;
-  letter-spacing: 0.02em;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .brand strong {
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
 
 .brand-word-money,
 .brand-word-buddy {
-  color: #25947e;
+  color: var(--green-500);
 }
 
 .brand-word-buddy {
-  color: #55ce8b;
+  color: var(--green-accent);
 }
 
 .brand-mark {
@@ -133,10 +140,10 @@ pre:focus-visible {
   gap: 12px;
   max-width: 340px;
   margin: 0;
-  padding: 18px 22px;
-  border-radius: 12px;
-  background: #24444e;
-  color: #dbe8e9;
+  padding: 14px 20px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0f2fe;
   font-size: 0.92rem;
 }
 
@@ -156,7 +163,7 @@ pre:focus-visible {
 }
 
 .header-note strong {
-  color: #39c55f;
+  color: var(--green-light);
 }
 
 .footer p strong {
@@ -164,8 +171,8 @@ pre:focus-visible {
 }
 
 .flow {
-  width: min(1120px, calc(100% - 40px));
-  margin: 28px auto 0;
+  width: min(1240px, calc(100% - 40px));
+  margin: 16px auto 0;
 }
 
 .step-indicator {
@@ -184,8 +191,9 @@ pre:focus-visible {
   border-radius: 999px;
   padding: 8px 14px;
   color: #6f7b8d;
-  font-size: 0.88rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .step-indicator .is-active {
@@ -197,7 +205,7 @@ pre:focus-visible {
   display: grid;
   align-items: start;
   grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.9fr);
-  gap: 28px;
+  gap: 16px;
 }
 
 .form-step > .left-column,
@@ -224,11 +232,11 @@ pre:focus-visible {
 
 .left-column {
   display: grid;
-  gap: 24px;
+  gap: 16px;
 }
 
 .card {
-  border: 1px solid rgba(214, 224, 233, 0.9);
+  border: 1px solid #e5ebf0;
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -237,7 +245,7 @@ pre:focus-visible {
 .finance-card,
 .movements-card,
 .analysis-card {
-  padding: clamp(22px, 3vw, 32px);
+  padding: clamp(18px, 2.5vw, 24px);
 }
 
 .analysis-card {
@@ -258,23 +266,29 @@ pre:focus-visible {
 .section-heading h2,
 .analysis-card h2 {
   margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
   color: var(--ink);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
 }
 
 .section-heading h1 {
-  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  font-size: clamp(1.125rem, 2vw, 1.25rem);
+  line-height: 1.5;
 }
 
 .section-heading h2,
 .analysis-card h2 {
-  font-size: 1.25rem;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .section-heading p,
 .analysis-card p {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .compact-heading {
@@ -290,8 +304,9 @@ pre:focus-visible {
   padding: 6px 10px;
   background: #eff8f3;
   color: #16824b;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .field-grid,
@@ -316,8 +331,10 @@ pre:focus-visible {
 .field span,
 .frequency-group legend {
   color: #253750;
-  font-size: 0.93rem;
-  font-weight: 800;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .field-label {
@@ -354,17 +371,21 @@ pre:focus-visible {
 
 .field small {
   color: #95a0af;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .field input,
 .field select {
   width: 100%;
-  min-height: 48px;
+  min-height: 43px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #f9fbfd;
+  border-radius: 10px;
+  background: #f9fafb;
   color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.4;
   padding: 0 14px;
   transition:
     border-color 160ms ease,
@@ -409,7 +430,8 @@ pre:focus-visible {
   border-radius: 10px;
   color: #687489;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .frequency-group input:checked + span {
@@ -426,8 +448,8 @@ pre:focus-visible {
 .movement-form {
   border: 1px solid #e4edf3;
   border-radius: var(--radius-md);
-  padding: 18px;
-  background: #fbfdfe;
+  padding: 14px;
+  background: #f9fafb;
 }
 
 .form-actions {
@@ -441,9 +463,12 @@ pre:focus-visible {
 .secondary-button,
 .ghost-button,
 .row-actions button {
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid transparent;
-  font-weight: 900;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
@@ -460,16 +485,16 @@ pre:focus-visible {
 .primary-button {
   width: 100%;
   margin-top: 22px;
-  background: linear-gradient(135deg, #9ee8b9, #7ee3a9);
+  background: var(--green-accent);
   color: #ffffff;
   box-shadow: 0 14px 28px rgba(49, 215, 119, 0.28);
 }
 
 .secondary-button {
   padding: 0 18px;
-  border-color: var(--green-500);
+  border-color: var(--green-accent);
   background: #ffffff;
-  color: #11a452;
+  color: var(--green-500);
 }
 
 .ghost-button,
@@ -517,7 +542,15 @@ pre:focus-visible {
 .privacy-note {
   display: block;
   color: #7e899a;
-  font-size: 0.86rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.movement-item strong {
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .positive-amount,
@@ -577,23 +610,27 @@ pre:focus-visible {
 .eyebrow {
   margin: 0 0 4px;
   color: #16824b;
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .result-hero h1 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(1.75rem, 4vw, 2.55rem);
-  letter-spacing: -0.05em;
-  line-height: 1.04;
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 .result-hero p:not(.eyebrow) {
   margin: 8px 0 0;
   color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 .result-dashboard {
@@ -629,10 +666,12 @@ pre:focus-visible {
 .profile-panel > h2,
 .recommendation-panel h3 {
   margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
   color: var(--ink);
-  font-size: clamp(1.2rem, 2vw, 1.45rem);
-  letter-spacing: -0.04em;
-  line-height: 1.1;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+  line-height: 27px;
 }
 
 .summary-kpis {
@@ -656,8 +695,10 @@ pre:focus-visible {
   align-items: center;
   gap: 10px;
   color: var(--ink);
-  font-size: 0.86rem;
-  font-weight: 900;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .summary-kpi-icon {
@@ -684,18 +725,22 @@ pre:focus-visible {
 
 .summary-kpi strong,
 .indicator-card strong {
+  font-family: var(--font-heading);
+  font-weight: 700;
   color: var(--ink);
-  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+  font-size: 1.125rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
 }
 
 .summary-kpi small,
 .indicator-card small {
   color: #718096;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .progress-track {
@@ -734,8 +779,10 @@ pre:focus-visible {
 
 .indicator-card > span {
   color: #667486;
-  font-size: 0.82rem;
-  font-weight: 900;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .expense-distribution-layout {
@@ -760,13 +807,17 @@ pre:focus-visible {
   justify-content: space-between;
   gap: 12px;
   color: #536176;
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .expense-donut-header strong {
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .expense-donut {
@@ -796,15 +847,20 @@ pre:focus-visible {
 .payment-pattern span,
 .demo-trend-note {
   color: #718096;
-  font-size: 0.78rem;
-  font-weight: 900;
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .expense-donut strong {
+  font-family: var(--font-heading);
+  font-weight: 700;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
 }
 
 .expense-legend {
@@ -821,8 +877,9 @@ pre:focus-visible {
   align-items: center;
   gap: 8px;
   color: #536176;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .legend-dot {
@@ -850,11 +907,13 @@ pre:focus-visible {
 }
 
 .expense-highlights strong {
+  font-family: var(--font-heading);
+  font-weight: 700;
   color: var(--ink);
-  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
-  line-height: 1.08;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
 }
 
 .profile-panel {
@@ -894,18 +953,21 @@ pre:focus-visible {
 }
 
 .score-ring span {
+  font-family: var(--font-heading);
   color: var(--ink);
-  font-size: clamp(2.5rem, 7vw, 4rem);
-  font-weight: 900;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.08em;
-  line-height: 0.95;
+  letter-spacing: -0.03em;
+  line-height: 1.28;
 }
 
 .score-ring small {
   color: #748094;
-  font-size: 0.9rem;
-  font-weight: 900;
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .profile-badge {
@@ -916,8 +978,10 @@ pre:focus-visible {
   padding: 8px 12px;
   background: #ebfff3;
   color: #138448;
-  font-size: 0.82rem;
-  font-weight: 900;
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .profile-badge img {
@@ -948,7 +1012,8 @@ pre:focus-visible {
   align-items: start;
   padding: 0;
   color: #39475c;
-  line-height: 1.55;
+  font-size: 0.8125rem;
+  line-height: 1.6;
 }
 
 .recommendation-panel li span {
@@ -991,21 +1056,25 @@ pre:focus-visible {
 
 .payment-pattern > span {
   color: #667486;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .payment-pattern strong {
-  font-size: clamp(1rem, 2vw, 1.18rem);
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
 }
 
 .payment-pattern small {
   color: #718096;
-  font-size: 0.72rem;
-  line-height: 1.25;
+  font-size: 0.6875rem;
+  line-height: 1.5;
 }
 
 .payment-bar {
@@ -1047,7 +1116,9 @@ pre:focus-visible {
   border-radius: 12px;
   padding: 12px 14px;
   color: #526076;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
   cursor: pointer;
 }
 
@@ -1122,7 +1193,8 @@ pre:focus-visible {
   padding: 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #d7f4e5;
-  font-size: 0.84rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 .json-panel-header span {
@@ -1152,6 +1224,8 @@ pre {
 
 .footer p {
   margin: 8px 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .footer span {
@@ -1184,6 +1258,8 @@ pre {
 
 .footer small {
   color: rgba(214, 230, 244, 0.55);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {
