@@ -144,5 +144,6 @@ npm run build
 
 - [Contrato detallado de `POST /analisis-financiero`](docs/analisis-financiero-api.md)
 - [Mapeo Data Science Backend para `/analisis-financiero`](docs/analisis-financiero-ds-backend-mapping.md)
+- [Estrategia de carga de modelos Data Science](docs/estrategia-carga-modelos.md)
 - [OCI Object Storage Free Tier para artefactos](docs/oci-object-storage-artefactos.md)
 - [Guía de contribución](CONTRIBUTING.md)
