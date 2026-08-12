@@ -48,6 +48,10 @@ dist
 dist-ssr
 *.local
 
+# Environment files in python
+*/.env
+*/.oci/config
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
