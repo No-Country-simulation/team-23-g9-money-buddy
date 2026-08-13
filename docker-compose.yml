@@ -16,3 +16,16 @@ services:
       - "5173:80"
     depends_on:
       - backend
+  
+  datascience:
+    build:
+      context: ./datascience
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./dataScience/.oci:/root/.oci:ro
+
+    env_file:
+      - ./datascience/.env

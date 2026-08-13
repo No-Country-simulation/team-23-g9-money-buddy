@@ -51,6 +51,7 @@ dist-ssr
 # Environment files in python
 */.env
 */.oci/config
+*/.oci/moises.otero446@gmail.com-2026-08-12T02_53_43.435Z.pem
 __pycache__
 dataScience/models
 

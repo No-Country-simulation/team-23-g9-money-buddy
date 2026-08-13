@@ -1,0 +1,11 @@
+.env
+.oci/config
+.oci/moises.otero446@gmail.com-2026-08-12T02_53_43.435Z.pem
+app/__pycache__
+Dockerfile
+.dockerignore
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
