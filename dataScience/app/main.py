@@ -2,7 +2,6 @@ import logging
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 
-from .processing import predict_categoria, compute_indicadores, predict_score_financiero, predict_perfil_financiero, generate_recomendaciones
 from .schemas import (
     CategoriaData,
     CategoriaRequest,
@@ -12,9 +11,9 @@ from .schemas import (
     PerfilFinancieroResponse,
     TransaccionClasificada,
 )
+from .processing import predict_categoria, compute_indicadores, predict_score_financiero, predict_perfil_financiero
 from .models import load_models, get_model
-
-app = FastAPI( title="MoneyBuddy AI", version="1.0.0" )
+from .recomendations import features, perfil_desde_features, evaluar_perfil_final
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("main")
@@ -28,10 +27,12 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Apagando servicio.")
 
+app = FastAPI( title="MoneyBuddy AI", version="1.0.0", lifespan=lifespan )
+
 # Comando para ver el estado de la API
 @app.get("/health")
 def health():
-    return {"status": "ok", "modelos_cargados": list(get_model().keys())}
+    return {"status": "ok"}
 
 # EndPoint para predecir la categoría de las transacciones
 @app.post("/predecir-categoria", response_model=CategoriaResponse)
@@ -59,17 +60,23 @@ def predecir_categoria(request: CategoriaRequest) -> CategoriaResponse:
 @app.post("/perfil-financiero", response_model=PerfilFinancieroResponse)
 def perfil_financiero(request: PerfilFinancieroRequest) -> PerfilFinancieroResponse:
     try:
-        financial_stability_model = get_model("rf_financial_stability")
-        perfil_financiero_model = get_model("rf_perfil_financiero")
+        financial_stability_model = get_model("modelo_financial_stability")
+        perfil_financiero_model = get_model("modelo_perfil_financiero")
 
-        clasificadas = []
-        for t in request.transacciones:
-            clasificadas.append(t)
+        clasificadas = request.transacciones
 
         indicadores, resumen_gastos = compute_indicadores(request, clasificadas)
         score = predict_score_financiero(request, indicadores, financial_stability_model)
         perfil = predict_perfil_financiero(request, indicadores, perfil_financiero_model)
-        #TODO: Implementar el motor de generar recomendaciones basado en el perfil financiero y los indicadores
+        feat = features(indicadores,resumen_gastos,score)
+        perfil_features = perfil_desde_features(feat)
+        reglas = evaluar_perfil_final(perfil_features)
+
+        # Convertir Regla -> string
+        recomendaciones = [
+            regla.recomendacion
+            for regla in reglas
+        ]
 
         return PerfilFinancieroResponse(
             success=True,
@@ -80,6 +87,7 @@ def perfil_financiero(request: PerfilFinancieroRequest) -> PerfilFinancieroRespo
                 resumen_gastos=resumen_gastos,
                 indicadores=indicadores,
                 transacciones_clasificadas=clasificadas,
+                recomendaciones = recomendaciones
             ),
         )
     except Exception as exc:

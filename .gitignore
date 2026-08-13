@@ -51,6 +51,8 @@ dist-ssr
 # Environment files in python
 */.env
 */.oci/config
+__pycache__
+dataScience/models
 
 # Editor directories and files
 .vscode/*

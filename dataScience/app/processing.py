@@ -1,11 +1,13 @@
 import numpy as np
+import pandas as pd
 
 # --- Categoría ---
 TIPO_TRANSACCION_MAP = {"Egreso": 0, "Ingreso": 1}
-FEATURE_ORDER_CATEGORIA = ["dia", "mes", "anio", "valor_usd_scaled", "tipo_transaccion"]
+FEATURE_ORDER_CATEGORIA = ["dia", "mes", "anio", "valor_usd", "tipo_transaccion"]
 
 # --- Financiero ---
-FRECUENCIA_AHORRO_CATEGORIAS = ["Alta", "Baja", "Media", "Nula"]  # orden del one-hot en el CSV
+FRECUENCIA_AHORRO_CATEGORIAS = ["Alta", "Baja", "Media", "Nula"] 
+FRECUENCIA_AHORRO_MAP = { "Nula": 0, "Baja": 1, "Media": 2, "Alta": 3 }
 FEATURE_ORDER_FINANCIERO = [
     "ingresos_mensuales_usd",
     "egresos_total_mensual_usd",
@@ -21,19 +23,21 @@ FEATURE_ORDER_FINANCIERO = [
 
 def build_categoria_features(transaccion, scaler) -> np.ndarray:
     monto_log = np.log1p(transaccion.monto)
-    monto_scaled = scaler.transform([[monto_log]])[0][0]
     dia, mes, anio = transaccion.fecha.split("-")
     dia, mes, anio = int(dia), int(mes), int(anio)
     tipo_transaccion = TIPO_TRANSACCION_MAP.get(transaccion.tipo, 0)
+    
 
-    values = {
+    X = pd.DataFrame([{
         "dia": dia,
         "mes": mes,
         "anio": anio,
-        "valor_usd_scaled": monto_scaled,
-        "tipo_transaccion": tipo_transaccion,
-    }
-    return np.array([[values[f] for f in FEATURE_ORDER_CATEGORIA]])
+        "valor_usd": monto_log,
+        "tipo_transaccion": tipo_transaccion
+    }])
+
+    X = X[FEATURE_ORDER_CATEGORIA]
+    return X
 
 def predict_categoria(transaccion, models, scalers, label_encoders) -> str:
     scaler =scalers
@@ -113,16 +117,32 @@ def build_stability_features(payload, indicadores: dict) -> np.ndarray:
     }
     return np.array([[values[f] for f in FEATURE_ORDER_FINANCIERO]])
 
+def build_perfil_features( payload, indicadores ) -> np.ndarray:
 
-def predict_score_financiero(payload, indicadores: dict, models: dict) -> float:
-    X = build_stability_features(payload, indicadores)
-    score = models["rf_financial_stability"].predict(X)[0]
+    frecuencia = FRECUENCIA_AHORRO_MAP.get(
+        payload.frecuencia_ahorro,
+        0
+    )
+
+    X = np.array([[
+        payload.ingreso_mensual,
+        indicadores["gasto_total"],
+        frecuencia
+    ]], dtype=float)
+
+    return X
+
+def predict_score_financiero(payload,indicadores: dict,model) -> float:
+
+    X = build_stability_features(payload,indicadores)
+    score = model.predict(X)[0]
     return round(float(score), 2)
 
 
-def predict_perfil_financiero(payload, indicadores: dict, models: dict) -> str:
-    X = build_stability_features(payload, indicadores)
-    pred = models["rf_perfil_financiero"].predict(X)[0]
+def predict_perfil_financiero( payload, indicadores: dict, model) -> str:
+
+    X = build_perfil_features( payload, indicadores )
+    pred = model.predict(X)[0]
     return str(pred)
 
 

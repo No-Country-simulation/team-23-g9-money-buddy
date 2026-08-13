@@ -3,7 +3,10 @@ from pathlib import Path
 import oci
 from dotenv import load_dotenv
 
-load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BASE_DIR / ".env"
+load_dotenv(ENV_FILE)
 
 # CONFIGURACIÓN OCI
 OCI_CONFIG_FILE = os.getenv(
@@ -23,7 +26,7 @@ config = oci.config.from_file(
 object_storage = oci.object_storage.ObjectStorageClient(config)
 
 # DESCARGAR OBJETO
-def download_model(object_name: str,local_path: str):
+def download_model(object_name: str, local_path: str):
     response = object_storage.get_object(
         namespace_name=OCI_NAMESPACE,
         bucket_name=OCI_BUCKET_NAME,

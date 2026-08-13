@@ -7,7 +7,7 @@ class Transaccion(BaseModel):
     fecha: str
     descripcion: str
     tipoPago: str
-    meses_a_deber: str
+    meses_a_deber: Optional[int] = None
     monto: float
 
 class TransaccionClasificada(Transaccion):
@@ -35,7 +35,7 @@ class PerfilFinancieroRequest(BaseModel):
     frecuencia_ahorro: str
     nivel_endeudamiento: float
     pago_mensual_deudas: float
-    transacciones: list[Transaccion]
+    transacciones: list[TransaccionClasificada]
 
 
 class Indicadores(BaseModel):
