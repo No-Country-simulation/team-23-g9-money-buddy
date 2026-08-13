@@ -49,21 +49,33 @@ def ratio_a_nivel_ahorro(ratio: float) -> str:
 def perfil_desde_features(feat: Dict[str, Any]) -> Dict[str, Any]:
 
     porcentajes = feat.get("porcentajes", {}) or {}
-
+    porcentajes_normalizados = {
+        str(k).strip().lower(): float(v)
+        for k, v in porcentajes.items()
+    }
     return {
         "ingreso_mensual": feat.get("ingreso_mensual", 0.0),
         "gasto_ingreso_ratio": feat.get("gasto_ingreso_ratio", 0.0),
         "nivel_endeudamiento": feat.get("nivel_endeudamiento", 0.0),
         "score_financiero": feat.get("financial_stability_score", 0.0),
-        "pct_alimentacion": porcentajes.get("Alimentacion", 0.0),
-        "pct_ocio": porcentajes.get("Ocio", 0.0),
-        "pct_transporte": porcentajes.get("Transporte", 0.0),
-        "pct_salud": porcentajes.get("Salud", 0.0),
+        "pct_alimentacion": porcentajes_normalizados.get("alimentacion", 0.0),
+        "pct_ocio": porcentajes_normalizados.get("entretenimiento", 0.0),
+        "pct_transporte": porcentajes_normalizados.get("transporte", 0.0),
+        "pct_salud": porcentajes_normalizados.get("salud", 0.0),
+        "pct_compras": porcentajes_normalizados.get("compras", 0.0),
+        "pct_viaje": porcentajes_normalizados.get("viaje", 0.0),
+        "pct_facturas": porcentajes_normalizados.get("facturas", 0.0),
+        "pct_servicios": porcentajes_normalizados.get("servicios", 0.0),
+        "pct_vivienda": porcentajes_normalizados.get("vivienda", 0.0),
+        "pct_educacion": porcentajes_normalizados.get("educacion", 0.0),
+        "pct_otro": porcentajes_normalizados.get("otro", 0.0),
+        "pct_salario": porcentajes_normalizados.get("salario", 0.0),
+        "pct_inversion": porcentajes_normalizados.get("inversion", 0.0),
         "nivel_ahorro": ratio_a_nivel_ahorro(feat.get("ahorro_ratio", 0.0)),
         "variabilidad_gasto": feat.get("variabilidad_gasto", 0.0),
         "num_suscripciones": feat.get("suscripciones_recurrentes_count", 0),
         "num_pagos_recurrentes_sin_revision": feat.get("pagos_recurrentes_sin_revision", 0),
-        "deuda_tarjeta_interes_alto": feat.get("deuda_tarjeta_interes_alto", False),
+        "deuda_tarjeta_interes_alto": feat.get("deuda_tarjeta_interes_alto", False)
     }
 
 
