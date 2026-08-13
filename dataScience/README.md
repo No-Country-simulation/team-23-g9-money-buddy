@@ -82,26 +82,60 @@ docker-compose up -d --build
 
 ### Parametros /predecir-categoria
 - Income
-    tipo: str
-    fecha: str
-    descripcion: str
-    tipoPago: str
-    meses_a_deber: Optional[int] = None
-    monto: float
+    - tipo: str
+    - fecha: str
+    - descripcion: str
+    - tipoPago: str
+    - meses_a_deber: Optional[int] = None
+    - monto: float
 
 - Response
-    tipo: str
-    fecha: str
-    descripcion: str
-    tipoPago: str
-    meses_a_deber: Optional[int] = None
-    monto: float
-    categoria: Optional[str] = None
+    - tipo: str
+    - fecha: str
+    - descripcion: str
+    - tipoPago: str
+    - meses_a_deber: Optional[int] = None
+    - monto: float
+    - categoria: Optional[str] = None
 
 #### Ejemplo
 | Income | Response |
 |--------|----------|
 | `{"transacciones":[{"tipo":"Egreso","fecha":"2026-07-01","descripcion":"Supermercado","tipoPago":"Efectivo","meses_a_deber":0,"monto":420,"categoria":"alimentacion"},{"tipo":"Egreso","fecha":"2026-07-02","descripcion":"Gas","tipoPago":"Credito","meses_a_deber":1,"monto":420,"categoria":"servicios"},{"tipo":"Ingreso","fecha":"2026-07-01","descripcion":"Encargo","tipoPago":"Transferencia","meses_a_deber":0,"monto":420,"categoria":"Ingreso"}]}` | `{"success":true,"message":"transacciones clasificadas correctamente","data":{"transacciones_clasificadas":[{"tipo":"Egreso","fecha":"2026-07-01","descripcion":"Supermercado","tipoPago":"Efectivo","meses_a_deber":0,"monto":420.0,"categoria":"vivienda"},{"tipo":"Egreso","fecha":"2026-07-02","descripcion":"Gas","tipoPago":"Credito","meses_a_deber":1,"monto":420.0,"categoria":"vivienda"},{"tipo":"Ingreso","fecha":"2026-07-01","descripcion":"Encargo","tipoPago":"Transferencia","meses_a_deber":0,"monto":420.0,"categoria":"otro"}]}}` |
+
+### Parametros /perfil-financiero
+- Income
+    - credito_total: float
+    - ingreso_mensual: float
+    - frecuencia_ahorro: str
+    - nivel_endeudamiento: float
+    - pago_mensual_deudas: float
+    - transacciones: list[TransaccionClasificada] #estructura de /predecir-categoria
+    
+- Response
+    - perfil_financiero: str
+    - score_financiero: float
+    - resumen_gastos: dict[str, float]
+    - ingreso_mensual: float
+    - deuda_total: float
+    - credito_total: float
+    - frecuencia_ahorro: str
+    - nivel_endeudamiento: float
+    - pago_mensual_deudas: float
+    - gasto_total: float
+    - ratio_pago_deudas: float
+    - ratio_deuda_ingreso: float
+    - porcentaje_alimentos: float = 0
+    - porcentaje_transporte: float = 0
+    - porcentaje_entretenimiento: float = 0
+    - porcentaje_salud: float = 0
+    - porcentaje_vivienda: float = 0
+    - porcentaje_educacion: float = 0
+    - porcentaje_viajes: float = 0
+    - porcentaje_servicios: float = 0
+    - porcentaje_otros: float = 0
+    - transacciones_clasificadas: list[TransaccionClasificada]
+    - recomendaciones: list[str]
 
 | Income | Response |
 |--------|----------|
