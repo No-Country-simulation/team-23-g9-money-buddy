@@ -1,6 +1,6 @@
 # Mapeo Data Science Backend para `/analisis-financiero`
 
-Este documento define el acuerdo de trabajo para el contrato oficial de `POST /analisis-financiero`. Backend es responsable de la validación HTTP, la orquestación, los cálculos determinísticos y el response HTTP final. Data Science es responsable de las salidas del clasificador de transacciones y del proceso/modelo de perfil financiero.
+Este documento define el acuerdo vigente para el contrato oficial de `POST /analisis-financiero`. Backend es responsable de la validación HTTP, la orquestación, los cálculos determinísticos, el fallback seguro y el response HTTP final. El servicio FastAPI `ml-service` aporta predicción financiera y clasificación ML cuando corresponde.
 
 ## Alcance y fuente de verdad
 
@@ -10,8 +10,8 @@ Este documento define el acuerdo de trabajo para el contrato oficial de `POST /a
 | Validación del request HTTP | Backend | DTO/controller de Backend |
 | Orquestación HTTP | Backend | Capa de servicio de Backend |
 | Indicadores determinísticos | Backend | Payload del request actual únicamente |
-| Clasificación de transacciones | Data Science | Salida del clasificador DS mapeada por Backend |
-| Perfil financiero | Data Science | Salida del proceso/modelo DS mapeada por Backend |
+| Clasificación de transacciones | Backend + `ml-service` | Reglas por descripción primero; ML solo para `otros` ambiguos |
+| Perfil financiero | Backend + `ml-service` | Predicción financiera mapeada por Backend con fallback seguro |
 | Response HTTP final | Backend | DTO/assembler de response de Backend |
 
 El MVP es stateless. El endpoint no persiste requests, no lee deuda histórica y no calcula reducción real de deuda mes a mes.
@@ -20,33 +20,45 @@ El MVP es stateless. El endpoint no persiste requests, no lee deuda histórica y
 
 | Campo | Nivel | Responsable | Regla |
 | --- | --- | --- | --- |
-| `credito_total` | Raíz | Backend valida, DS puede consumir | Obligatorio. Mayor o igual a cero. |
-| `ingreso_mensual` | Raíz | Backend valida, DS puede consumir | Obligatorio. Mayor a cero. |
-| `frecuencia_ahorro` | Raíz | Backend valida, DS puede consumir | Obligatorio. Valores permitidos: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
-| `pago_mensual_deudas` | Raíz | Backend valida, DS puede consumir | Obligatorio. Mayor o igual a cero. |
-| `transacciones` | Raíz | Backend valida, clasificador DS consume | Obligatorio. Debe incluir al menos una transacción. |
-| `tipo` | Transacción | Backend valida, clasificador DS consume | Obligatorio. Valores permitidos: `Ingreso`, `Egreso`. |
-| `fecha` | Transacción | Backend valida, clasificador DS consume | Fecha obligatoria. Formato recomendado: `YYYY-MM-DD`. |
-| `descripcion` | Transacción | Backend valida, clasificador DS consume | Texto obligatorio no vacío. |
-| `tipo_pago` | Transacción | Backend valida, clasificador DS puede consumir | Campo público oficial. Obligatorio para `Egreso`. Valores permitidos: `Efectivo`, `Debito`, `Credito`. |
-| `meses_a_deber` | Transacción | Backend valida, clasificador DS puede consumir | Obligatorio cuando `tipo_pago` es `Credito`. |
-| `monto` | Transacción | Backend valida, clasificador DS consume | Obligatorio. Mayor a cero. |
+| `credito_total` | Raíz | Backend valida, `ml-service` puede consumir | Obligatorio. Mayor o igual a cero. |
+| `ingreso_mensual` | Raíz | Backend valida, `ml-service` puede consumir | Obligatorio. Mayor a cero. |
+| `frecuencia_ahorro` | Raíz | Backend valida, `ml-service` puede consumir | Obligatorio. Valores permitidos: `NULA`, `BAJA`, `MEDIA`, `ALTA`. |
+| `pago_mensual_deudas` | Raíz | Backend valida, `ml-service` puede consumir | Obligatorio. Mayor o igual a cero. |
+| `transacciones` | Raíz | Backend valida, `ml-service` puede consumir | Obligatorio. Debe incluir al menos una transacción. |
+| `tipo` | Transacción | Backend valida, `ml-service` puede consumir | Obligatorio. Valores permitidos: `Ingreso`, `Egreso`. |
+| `fecha` | Transacción | Backend valida, `ml-service` puede consumir | Fecha obligatoria. Formato recomendado: `YYYY-MM-DD`. |
+| `descripcion` | Transacción | Backend valida; reglas determinísticas consumen | Texto obligatorio no vacío. El modelo ML actual no lo usa como feature. |
+| `tipo_pago` | Transacción | Backend valida | Campo público oficial. Obligatorio para `Egreso`. Valores permitidos: `Efectivo`, `Debito`, `Credito`. |
+| `meses_a_deber` | Transacción | Backend valida | Obligatorio cuando `tipo_pago` es `Credito`. |
+| `monto` | Transacción | Backend valida, `ml-service` puede consumir | Obligatorio. Mayor a cero. |
 
-## Mapeo del clasificador de transacciones DS
+## Resolución de categoría de transacciones
+
+La clasificación actual es híbrida y prioriza resultados explicables:
+
+1. `Ingreso` siempre devuelve `categoria: "ingreso"` sin ML.
+2. Para `Egreso`, se aplican reglas determinísticas sobre `descripcion`.
+3. Si las reglas devuelven una categoría distinta de `otros`, Backend conserva esa categoría.
+4. Si las reglas devuelven `otros`, Backend puede usar la categoría devuelta por `ml-service`.
+5. Backend valida las categorías recibidas y cae al resultado determinístico si ML no está disponible, falla o devuelve una categoría inválida.
+
+El modelo clasificador actual no usa `descripcion` como señal principal ni como feature. La descripción participa en las reglas determinísticas previas.
+
+## Mapeo del clasificador de transacciones ML
 
 | Dirección | Campo | Responsable | Notas |
 | --- | --- | --- | --- |
-| Input | `tipo` | Backend envía a DS | Las transacciones `Ingreso` no son categorías de gasto. |
-| Input | `fecha` | Backend envía a DS | Disponible para clasificación si DS necesita señales temporales. |
-| Input | `descripcion` | Backend envía a DS | Principal señal de texto para clasificar categoría de gasto. |
-| Input | `tipo_pago` | Backend envía a DS cuando existe | Puede ayudar a clasificar comportamiento crédito/débito/efectivo, pero sigue siendo validado por Backend. |
-| Input | `meses_a_deber` | Backend envía a DS cuando existe | Presente para egresos a crédito cuando el contrato lo recibe. |
-| Input | `monto` | Backend envía a DS | Disponible para clasificación o resúmenes posteriores. |
-| Output | `categoria` | DS devuelve a Backend | Para `Ingreso`, la categoría DEBE ser `ingreso`. Para `Egreso`, DS devuelve una categoría de gasto. |
+| Input ML | `dia` | `ml-service` deriva desde `fecha` | Día de la transacción. |
+| Input ML | `mes` | `ml-service` deriva desde `fecha` | Mes de la transacción. |
+| Input ML | `anio` | `ml-service` deriva desde `fecha` | Año de la transacción. |
+| Input ML | `valor_usd` | `ml-service` deriva desde `monto` | Usa `log1p(monto)`. |
+| Input ML | `tipo_transaccion` | `ml-service` deriva desde `tipo` | Codifica `Ingreso` como `1`; otros casos como `0`. |
+| Preprocesamiento | `scaler_categoria.pkl` | `ml-service` | Escala las features antes de llamar al RandomForest. |
+| Output ML | `categoria` | `ml-service` devuelve a Backend | Backend acepta solo categorías oficiales; si no, usa fallback determinístico. |
 
 Las categorías oficiales son `alimentos`, `transporte`, `salud`, `vivienda`, `educacion`, `ocio_entretenimiento`, `servicios`, `ropa_calzado`, `tecnologia`, `ingreso` y `otros`. En `resumen_gastos` y `porcentaje_categorias` solo deben aparecer categorías de egreso, por lo que `ingreso` queda excluida de esos objetos.
 
-## Mapeo del perfil financiero DS
+## Mapeo del perfil financiero ML
 
 | Dirección | Campo | Responsable | Notas |
 | --- | --- | --- | --- |
@@ -56,13 +68,13 @@ Las categorías oficiales son `alimentos`, `transporte`, `salud`, `vivienda`, `e
 | Input | `deuda_total` | Backend calcula | Suma de egresos a crédito del request actual. |
 | Input | `nivel_endeudamiento` | Backend calcula | `(deuda_total / credito_total) * 100`, manejando división por cero de forma segura. |
 | Input | `pago_mensual_deudas` | Backend reenvía desde request | Valor del request actual. |
-| Input | Transacciones clasificadas | Backend envía después de mapear la salida del clasificador DS | Incluye `categoria` en cada transacción. |
+| Input | Transacciones clasificadas | Backend envía después de resolver categorías | Incluye `categoria` en cada transacción. |
 | Input | Resumen de gastos, cuando aplique | Backend calcula desde transacciones clasificadas | Incluye totales y porcentajes por categoría disponibles en el contrato actual. |
-| Output | `perfil_financiero` | DS devuelve a Backend | Backend lo ubica en `data.perfil_financiero`. |
-| Output | `score_financiero` | DS devuelve a Backend | Backend lo ubica en `data.score_financiero`. |
-| Output | `recomendaciones` | DS devuelve a Backend | Backend lo ubica en `data.recomendaciones`. |
+| Output | `perfil_financiero` | Backend deriva desde la predicción/fallback | Backend lo ubica en `data.perfil_financiero`. |
+| Output | `score_financiero` | `ml-service` predice; Backend valida/fallback | Backend lo ubica en `data.score_financiero`. |
+| Output | `recomendaciones` | Backend deriva desde el análisis final | Backend lo ubica en `data.recomendaciones`. |
 
-Data Science no devuelve el response HTTP completo. Backend arma el wrapper público y el objeto `data`.
+`ml-service` no devuelve el response HTTP completo. Backend arma el wrapper público y el objeto `data`.
 
 ## Cálculos determinísticos de Backend
 
@@ -98,16 +110,17 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
 | `data.indicadores.ratio_pago_deudas` | Backend | Cálculo determinístico. |
 | `data.indicadores.ratio_deuda_ingreso` | Backend | Cálculo determinístico. |
 | `data.indicadores.porcentaje_*` | Backend | Cálculo determinístico desde categorías clasificadas. |
-| `data.transacciones_clasificadas` | Backend + clasificador DS | Backend conserva campos del request y agrega `categoria` desde DS. |
-| `data.recomendaciones` | Salida DS | Producido por el proceso/modelo de perfil DS e insertado por Backend. |
+| `data.transacciones_clasificadas` | Backend + `ml-service` cuando aplica | Backend conserva campos del request y agrega `categoria` validada. |
+| `data.recomendaciones` | Backend | Derivadas por Backend desde el análisis final. |
 
 ## Restricciones MVP
 
 - `POST /analisis-financiero` no requiere persistencia en el MVP.
 - No se lee ni se infiere deuda histórica.
 - No se calcula reducción mensual real de deuda desde `meses_a_deber`.
-- Data Science devuelve salidas de clasificador/perfil, no el response HTTP completo.
+- `ml-service` devuelve salidas de clasificador/predicción, no el response HTTP completo.
 - Backend es responsable de la forma pública de la API y del ensamblado final del response.
+- Backend conserva fallback determinístico si ML no está disponible o no es confiable.
 
 ## Checklist de compatibilidad
 
@@ -116,6 +129,9 @@ Estos cálculos usan únicamente el request que se está procesando. Backend en 
 - [x] `nivel_endeudamiento = (deuda_total / credito_total) * 100`.
 - [x] `deuda_total` sale únicamente de egresos a crédito del request actual.
 - [x] El contrato es stateless para MVP: sin persistencia y sin deuda histórica.
+- [x] El modelo clasificador actual usa `dia`, `mes`, `anio`, `valor_usd` y `tipo_transaccion`, no `descripcion`.
+- [x] `descripcion` se usa en reglas determinísticas antes de consultar ML.
+- [x] Backend valida categorías ML y mantiene fallback determinístico seguro.
 - [x] El mapeo se alinea con el contrato Backend de la Issue #27 cuando aplica.
 - [x] El mapeo se alinea con las definiciones DS de la Issue #26 cuando aplica.
 
