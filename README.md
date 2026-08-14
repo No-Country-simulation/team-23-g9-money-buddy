@@ -1,10 +1,10 @@
 # Money Buddy
 
-Money Buddy es una aplicación para analizar información financiera personal a partir de ingresos, deudas y transacciones. El proyecto incluye una API REST con Java 21 y Spring Boot 3, y un dashboard demo construido con Vite, React y TypeScript.
+Money Buddy es una aplicación para analizar información financiera personal a partir de ingresos, deudas y transacciones. El proyecto incluye una API REST con Java 21 y Spring Boot 3, un dashboard demo construido con Vite, React y TypeScript, y un servicio FastAPI `ml-service` para inferencia de modelos ML.
 
 ## Quick start con Docker Compose
 
-Docker Compose es el flujo recomendado para levantar la aplicación completa sin configurar Maven o Node localmente.
+Docker Compose es el flujo recomendado para levantar la aplicación completa sin configurar Maven, Node o Python localmente. El compose completo inicia frontend, backend y `ml-service`.
 
 ### Requisitos
 
@@ -33,6 +33,8 @@ Servicios disponibles:
 | Frontend | `http://localhost:5173` |
 | API | `http://localhost:8080` |
 | Health check | `http://localhost:8080/actuator/health` |
+| ML service | `http://localhost:8000` |
+| ML health | `http://localhost:8000/health` |
 
 El frontend Docker se compila con `VITE_API_BASE_URL=http://localhost:8080` para que el navegador llame al backend desde tu máquina, no usando el hostname interno de Docker.
 
@@ -140,10 +142,17 @@ cd frontend
 npm run build
 ```
 
+### ML service
+
+```bash
+python -m pytest ml/tests
+```
+
 ## Documentación adicional
 
 - [Contrato detallado de `POST /analisis-financiero`](docs/analisis-financiero-api.md)
 - [Mapeo Data Science Backend para `/analisis-financiero`](docs/analisis-financiero-ds-backend-mapping.md)
 - [Estrategia de carga de modelos Data Science](docs/estrategia-carga-modelos.md)
+- [Servicio ML FastAPI](ml/README.md)
 - [OCI Object Storage Free Tier para artefactos](docs/oci-object-storage-artefactos.md)
 - [Guía de contribución](CONTRIBUTING.md)
