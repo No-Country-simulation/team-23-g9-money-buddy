@@ -2,6 +2,10 @@ package com.moneybuddy.analysis.application;
 
 import com.moneybuddy.analysis.api.AnalisisFinancieroRequest;
 import com.moneybuddy.analysis.api.AnalisisFinancieroResponse;
+import com.moneybuddy.analysis.application.port.FinancialScorePredictionPort;
+import com.moneybuddy.classification.application.DeterministicTransactionClassifier;
+import com.moneybuddy.classification.application.TransactionClassificationInput;
+import com.moneybuddy.classification.application.TransactionClassificationPort;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -27,13 +31,25 @@ public final class AnalisisFinancieroService {
 		"ropa_calzado",
 		"tecnologia",
 		"otros");
+	private final FinancialScorePredictionPort financialScorePredictionPort;
+	private final TransactionClassificationPort transactionClassificationPort;
+	private final DeterministicTransactionClassifier deterministicTransactionClassifier;
 
-  	public AnalisisFinancieroResponse analizar(AnalisisFinancieroRequest request) {
-    	BigDecimal ingresoMensual = valorOCero(request.ingresoMensual());
-    	BigDecimal creditoTotal = valorOCero(request.creditoTotal());
-    	BigDecimal pagoMensualDeudas = valorOCero(request.pagoMensualDeudas());
-    	List<AnalisisFinancieroResponse.TransaccionClasificada> transaccionesClasificadas = clasificarTransacciones(
-		request.transacciones());
+	public AnalisisFinancieroService(
+		FinancialScorePredictionPort financialScorePredictionPort,
+		TransactionClassificationPort transactionClassificationPort,
+		DeterministicTransactionClassifier deterministicTransactionClassifier) {
+		this.financialScorePredictionPort = financialScorePredictionPort;
+		this.transactionClassificationPort = transactionClassificationPort;
+		this.deterministicTransactionClassifier = deterministicTransactionClassifier;
+	}
+
+	public AnalisisFinancieroResponse analizar(AnalisisFinancieroRequest request) {
+		BigDecimal ingresoMensual = valorOCero(request.ingresoMensual());
+		BigDecimal creditoTotal = valorOCero(request.creditoTotal());
+		BigDecimal pagoMensualDeudas = valorOCero(request.pagoMensualDeudas());
+		List<AnalisisFinancieroResponse.TransaccionClasificada> transaccionesClasificadas = clasificarTransacciones(
+			request.transacciones());
 
 		BigDecimal deudaTotal = totalPorCrédito(transaccionesClasificadas);
 		BigDecimal gastoTotal = totalPorTipo(transaccionesClasificadas, "Egreso");
@@ -43,8 +59,9 @@ public final class AnalisisFinancieroService {
 		BigDecimal ratioPagoDeudas = ratio(pagoMensualDeudas, ingresoMensual);
 		BigDecimal ratioDeudaIngreso = ratio(deudaTotal, ingresoMensual);
 		String frecuenciaAhorro = normalizarFrecuenciaDeAhorro(request.frecuenciaAhorro());
-		int scoreFinanciero = scoreFinanciero(
-			frecuenciaAhorro, ratioPagoDeudas, ratioDeudaIngreso, nivelEndeudamiento);
+		int scoreFinanciero = financialScorePredictionPort.predictScore(request)
+			.orElseGet(() -> scoreFinanciero(
+				frecuenciaAhorro, ratioPagoDeudas, ratioDeudaIngreso, nivelEndeudamiento));
 		String perfilFinanciero = perfilFinanciero(scoreFinanciero, ratioPagoDeudas, nivelEndeudamiento);
 
 		return new AnalisisFinancieroResponse(
@@ -69,19 +86,27 @@ public final class AnalisisFinancieroService {
 				recomendaciones(perfilFinanciero, frecuenciaAhorro, ratioPagoDeudas, nivelEndeudamiento)));
 	}
 
-  private List<AnalisisFinancieroResponse.TransaccionClasificada> clasificarTransacciones(
-      List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
-    return transacciones.stream()
-        .map(transaccion -> new AnalisisFinancieroResponse.TransaccionClasificada(
-            normalizarTipo(transaccion.tipo()),
-            transaccion.fecha(),
-            transaccion.descripcion(),
-            transaccion.tipoPago(),
-            transaccion.mesesADeber(),
-            valorOCero(transaccion.monto()),
-            categoria(transaccion)))
-        .toList();
-  	}
+	private List<AnalisisFinancieroResponse.TransaccionClasificada> clasificarTransacciones(
+		List<AnalisisFinancieroRequest.TransaccionRequest> transacciones) {
+		List<TransactionClassificationInput> inputs = transacciones.stream()
+			.map(AnalisisFinancieroService::toClassificationInput)
+			.toList();
+		List<String> categories = categoriesFor(inputs);
+
+		return java.util.stream.IntStream.range(0, transacciones.size())
+			.mapToObj(index -> {
+				AnalisisFinancieroRequest.TransaccionRequest transaccion = transacciones.get(index);
+				return new AnalisisFinancieroResponse.TransaccionClasificada(
+					normalizarTipo(transaccion.tipo()),
+					transaccion.fecha(),
+					transaccion.descripcion(),
+					transaccion.tipoPago(),
+					transaccion.mesesADeber(),
+					valorOCero(transaccion.monto()),
+					categories.get(index));
+			})
+			.toList();
+	}
 
 	private BigDecimal totalPorCrédito(List<AnalisisFinancieroResponse.TransaccionClasificada> transacciones) {
 		return transacciones.stream()
@@ -125,42 +150,42 @@ public final class AnalisisFinancieroService {
 		return Collections.unmodifiableMap(porcentajes);
 	}
 
-	private String categoria(AnalisisFinancieroRequest.TransaccionRequest transaccion) {
-		if ("Ingreso".equalsIgnoreCase(transaccion.tipo())) {
-			return "ingreso";
-		}
+	private static TransactionClassificationInput toClassificationInput(AnalisisFinancieroRequest.TransaccionRequest transaccion) {
+		return new TransactionClassificationInput(
+			transaccion.tipo(),
+			transaccion.fecha(),
+			transaccion.descripcion(),
+			transaccion.tipoPago(),
+			transaccion.mesesADeber(),
+			transaccion.monto());
+	}
 
-		String descripcion = normalizar(transaccion.descripcion());
+	private List<String> categoriesFor(List<TransactionClassificationInput> inputs) {
+		List<String> deterministicCategories = deterministicCategories(inputs);
 
-		if (containsAny(descripcion, "supermercado", "mercado", "comida", "restaurante", "cafe", "delivery", "alimento")) {
-			return "alimentos";
+		try {
+			return transactionClassificationPort.classify(inputs)
+				.filter(categories -> categories.size() == inputs.size())
+				.filter(categories -> categories.stream().noneMatch(category -> category == null || category.isBlank()))
+				.map(mlCategories -> mergeDeterministicAndMlCategories(deterministicCategories, mlCategories))
+				.orElse(deterministicCategories);
+		} catch (RuntimeException exception) {
+			return deterministicCategories;
 		}
-		if (containsAny(descripcion, "bus", "taxi", "uber", "transporte", "metro", "combustible", "gasolina")) {
-			return "transporte";
-		}
-		if (containsAny(descripcion, "farmacia", "medico", "salud", "hospital", "clinica")) {
-			return "salud";
-		}
-		if (containsAny(descripcion, "alquiler", "renta", "hipoteca")) {
-			return "vivienda";
-		}
-		if (containsAny(descripcion, "colegio", "universidad", "curso", "libro", "educacion")) {
-			return "educacion";
-		}
-		if (containsAny(descripcion, "luz", "agua", "internet", "servicio", "telefono", "gas")) {
-			return "servicios";
-		}
-		if (containsAny(descripcion, "cine", "streaming", "juego", "entretenimiento", "ocio")) {
-			return "ocio_entretenimiento";
-		}
-		if (containsAny(descripcion, "ropa", "zapato", "calzado", "accesorio", "camisa", "pantalon")) {
-			return "ropa_calzado";
-		}
-		if (containsAny(descripcion, "laptop", "notebook", "computadora", "celular", "smartphone", "electronica", "tecnologia")) {
-			return "tecnologia";
-		}
+	}
 
-		return "otros";
+	private List<String> mergeDeterministicAndMlCategories(List<String> deterministicCategories, List<String> mlCategories) {
+		return java.util.stream.IntStream.range(0, deterministicCategories.size())
+			.mapToObj(index -> "otros".equals(deterministicCategories.get(index))
+				? mlCategories.get(index)
+				: deterministicCategories.get(index))
+			.toList();
+	}
+
+	private List<String> deterministicCategories(List<TransactionClassificationInput> inputs) {
+		return inputs.stream()
+			.map(deterministicTransactionClassifier::classify)
+			.toList();
 	}
 
 	private int scoreFinanciero(
@@ -248,16 +273,4 @@ public final class AnalisisFinancieroService {
 		return frecuenciaAhorro == null ? "NULA" : frecuenciaAhorro.toUpperCase(Locale.ROOT);
 	}
 
-	private String normalizar(String value) {
-		return value == null ? "" : value.toLowerCase(Locale.ROOT);
-	}
-
-	private boolean containsAny(String value, String... candidates) {
-		for (String candidate : candidates) {
-			if (value.contains(candidate)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

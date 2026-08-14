@@ -33,6 +33,13 @@ Thumbs.db
 
 # Local project artifacts
 .atl/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+ml/models/*
+!ml/models/.gitkeep
+ml/.env
+ml/.oci/
 
 # Logs
 logs

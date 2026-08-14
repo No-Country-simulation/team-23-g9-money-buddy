@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: money-buddy-api
+  http:
+    client:
+      connect-timeout: 2s
+      read-timeout: 2s
+
+moneybuddy:
+  ml-service:
+    base-url: ${ML_SERVICE_BASE_URL:http://localhost:8000}
 
 springdoc:
   swagger-ui:

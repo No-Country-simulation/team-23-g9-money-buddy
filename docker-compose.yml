@@ -1,10 +1,34 @@
 services:
+  ml-service:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    environment:
+      OCI_MODEL_DOWNLOAD_ENABLED: ${OCI_MODEL_DOWNLOAD_ENABLED:-false}
+      OCI_MODEL_FORCE_DOWNLOAD: ${OCI_MODEL_FORCE_DOWNLOAD:-false}
+      OCI_CONFIG_FILE: ${OCI_CONFIG_FILE:-/root/.oci/config}
+      OCI_CONFIG_PROFILE: ${OCI_CONFIG_PROFILE:-DEFAULT}
+      OCI_NAMESPACE: ${OCI_NAMESPACE:-}
+      OCI_BUCKET_NAME: ${OCI_BUCKET_NAME:-}
+      OCI_FINANCIAL_STABILITY_OBJECT: ${OCI_FINANCIAL_STABILITY_OBJECT:-financial-modelsmodelo_financial_stability.pkl}
+      OCI_TRANSACTION_CLASSIFIER_OBJECT: ${OCI_TRANSACTION_CLASSIFIER_OBJECT:-financial-modelsrandom_forest_model (champion).pkl}
+      OCI_LABEL_ENCODER_CATEGORIA_OBJECT: ${OCI_LABEL_ENCODER_CATEGORIA_OBJECT:-financial-modelslabel_encoder_categoria.pkl}
+      OCI_SCALER_CATEGORIA_OBJECT: ${OCI_SCALER_CATEGORIA_OBJECT:-financial-modelsscaler_categoria.pkl}
+    volumes:
+      - ${OCI_CONFIG_DIR:-./ml/.oci}:/root/.oci:ro
+    ports:
+      - "8000:8000"
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      ML_SERVICE_BASE_URL: http://ml-service:8000
     ports:
       - "8080:8080"
+    depends_on:
+      - ml-service
 
   frontend:
     build:
