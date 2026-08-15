@@ -38,11 +38,34 @@ Servicios disponibles:
 
 El frontend Docker se compila con `VITE_API_BASE_URL=http://localhost:8080` para que el navegador llame al backend desde tu máquina, no usando el hostname interno de Docker.
 
+Variables principales para despliegue rápido:
+
+| Servicio | Variable | Uso | Default local |
+| --- | --- | --- | --- |
+| Backend | `APP_CORS_ALLOWED_ORIGINS` | Orígenes permitidos por CORS, separados por coma. Usar la URL pública del frontend en producción. | `http://localhost:5173,http://localhost:5174` |
+| Backend | `ML_SERVICE_BASE_URL` | URL base usada por Backend para llamar a `ml-service`. | `http://localhost:8000` |
+| Frontend | `VITE_API_BASE_URL` | URL pública del Backend embebida al compilar el frontend. | `http://localhost:8080` |
+| ML service | `OCI_MODEL_DOWNLOAD_ENABLED` | Habilita descarga de artefactos desde OCI Object Storage al iniciar. | `false` |
+
+Contextos de build para plataformas externas:
+
+| Servicio | Contexto | Dockerfile | Puerto |
+| --- | --- | --- | --- |
+| Backend | `backend/` | `backend/Dockerfile` | `8080` |
+| Frontend | `frontend/` | `frontend/Dockerfile` | `80` |
+| ML service | `ml/` | `ml/Dockerfile` | `8000` |
+
 Para detener los servicios:
 
 ```bash
 docker compose down
 ```
+
+## Despliegue rápido
+
+La guía recomendada para publicar el MVP usa Render para Backend y `ml-service`, y Vercel para Frontend. Incluye configuración por dashboard, blueprint opcional de Render, orden de despliegue y checklist de smoke test.
+
+- [Guía de despliegue en Render y Vercel](docs/despliegue-render-vercel.md)
 
 ## Desarrollo local
 
@@ -153,6 +176,7 @@ python -m pytest ml/tests
 - [Contrato detallado de `POST /analisis-financiero`](docs/analisis-financiero-api.md)
 - [Mapeo Data Science Backend para `/analisis-financiero`](docs/analisis-financiero-ds-backend-mapping.md)
 - [Estrategia de carga de modelos Data Science](docs/estrategia-carga-modelos.md)
+- [Despliegue en Render y Vercel](docs/despliegue-render-vercel.md)
 - [Servicio ML FastAPI](ml/README.md)
 - [OCI Object Storage Free Tier para artefactos](docs/oci-object-storage-artefactos.md)
 - [Guía de contribución](CONTRIBUTING.md)
