@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: money-buddy-backend
+    runtime: docker
+    rootDir: backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: ML_SERVICE_BASE_URL
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        sync: false
+
+  - type: web
+    name: money-buddy-ml-service
+    runtime: docker
+    rootDir: ml
+    healthCheckPath: /health
+    envVars:
+      - key: MODEL_PATH
+        value: ./models/modelo_financial_stability.pkl
+      - key: CLASSIFIER_MODEL_PATH
+        value: ./models/classify-transactions.pkl
+      - key: LABEL_ENCODER_CATEGORIA_PATH
+        value: ./models/label_encoder_categoria.pkl
+      - key: SCALER_CATEGORIA_PATH
+        value: ./models/scaler_categoria.pkl
+      - key: OCI_MODEL_DOWNLOAD_ENABLED
+        sync: false
+      - key: OCI_MODEL_FORCE_DOWNLOAD
+        sync: false
+      - key: OCI_CONFIG_FILE
+        sync: false
+      - key: OCI_CONFIG_PROFILE
+        sync: false
+      - key: OCI_NAMESPACE
+        sync: false
+      - key: OCI_BUCKET_NAME
+        sync: false
+      - key: OCI_FINANCIAL_STABILITY_OBJECT
+        sync: false
+      - key: OCI_TRANSACTION_CLASSIFIER_OBJECT
+        sync: false
+      - key: OCI_LABEL_ENCODER_CATEGORIA_OBJECT
+        sync: false
+      - key: OCI_SCALER_CATEGORIA_OBJECT
+        sync: false
