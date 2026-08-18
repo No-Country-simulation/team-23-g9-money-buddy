@@ -9,6 +9,28 @@ import type { AnalysisViewModel, ParsedAnalysisResult } from '../types/analysis'
 import type { AnalysisState } from '../types/financial'
 import { formatApproxPercent, toMoney, toPercent } from '../utils/formatters'
 
+function formatTransactionDate(value: string | null) {
+  if (!value) {
+    return 'No informada'
+  }
+
+  const date = new Date(`${value}T00:00:00`)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
+}
+
+function formatSavingFrequency(value: string | null) {
+  if (!value) {
+    return 'No informada'
+  }
+
+  return value.toLowerCase().replace(/^./, (letter) => letter.toUpperCase())
+}
+
 interface ResultDashboardProps {
   analysis: AnalysisState
   parsedResult: ParsedAnalysisResult | null
@@ -45,6 +67,15 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
         {parsedResult && viewModel ? (
           <div className="result-dashboard">
             <div className="result-column result-column-left">
+              {parsedResult.message ? (
+                <section className="result-panel analysis-message-panel" aria-labelledby="analysis-message-title">
+                  <div className="result-panel-heading">
+                    <h2 id="analysis-message-title">Resumen del análisis</h2>
+                  </div>
+                  <p>{parsedResult.message}</p>
+                </section>
+              ) : null}
+
               <section className="result-panel" aria-labelledby="monthly-summary-title">
                 <div className="result-panel-heading">
                   <h2 id="monthly-summary-title">Resumen del mes</h2>
@@ -88,6 +119,16 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
 
                 <div className="indicator-grid">
                   <article className="indicator-card">
+                    <span>Ingreso mensual</span>
+                    <strong>{metrics?.ingreso_mensual !== null ? toMoney(metrics?.ingreso_mensual ?? 0) : 'No informado'}</strong>
+                  </article>
+
+                  <article className="indicator-card">
+                    <span>Crédito total</span>
+                    <strong>{metrics?.credito_total !== null ? toMoney(metrics?.credito_total ?? 0) : 'No informado'}</strong>
+                  </article>
+
+                  <article className="indicator-card">
                     <span>Ratio deuda/ingreso</span>
                     <strong>{formatApproxPercent(viewModel.debtIncomePercent)}</strong>
                     <div className="progress-track" aria-hidden="true">
@@ -109,67 +150,12 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
                     <div className="progress-track progress-track-blue" aria-hidden="true">
                       <span style={{ width: `${viewModel.monthsVisualPercent}%` }} />
                     </div>
-                    <small>Con pago mensual actual. Escala visual: 24 meses = 100%.</small>
                   </article>
-                </div>
-              </section>
 
-              <section className="result-panel expense-distribution-panel" aria-labelledby="expense-distribution-title">
-                <div className="result-panel-heading">
-                  <h2 id="expense-distribution-title">Distribución de gastos</h2>
-                </div>
-
-                <div className="expense-distribution-layout">
-                  <div className="expense-donut-card">
-                    <div className="expense-donut-header">
-                      <span>Categorías</span>
-                    </div>
-                    <div
-                      className="expense-donut"
-                      style={{ background: viewModel.donutBackground }}
-                      role="img"
-                      aria-label={`Distribución de gastos por categoría. Total: ${toMoney(metrics?.gasto_total ?? 0)}.`}
-                    >
-                      <div>
-                        <small>Gasto</small>
-                        <strong>{toMoney(metrics?.gasto_total ?? 0)}</strong>
-                      </div>
-                    </div>
-
-                    {viewModel.categoryDistribution.length > 0 ? (
-                      <ul className="expense-legend" aria-label="Categorías de gasto">
-                        {viewModel.categoryDistribution.map((category) => (
-                          <li key={category.key}>
-                            <span className="legend-dot" style={{ background: category.color }} aria-hidden="true" />
-                            <span>{category.label} {toPercent(Math.round(category.percent))}%</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="empty-list">No hay categorías de gasto para mostrar.</p>
-                    )}
-                  </div>
-
-                  <div className="expense-highlights">
-                    <article>
-                      <span className="expense-highlight-icon" aria-hidden="true">
-                        <img src={financeIcon} alt="" />
-                      </span>
-                      <div>
-                        <span>Gasto promedio por categoría</span>
-                        <strong>{toMoney(viewModel.averageCategoryExpense)}</strong>
-                      </div>
-                    </article>
-                    <article>
-                      <span className="expense-highlight-icon expense-highlight-icon-category" aria-hidden="true">
-                        <img src={viewModel.highestExpenseCategoryIcon} alt="" />
-                      </span>
-                      <div>
-                        <span>Tu mayor gasto son:</span>
-                        <strong>{viewModel.highestExpenseCategoryLabel}</strong>
-                      </div>
-                    </article>
-                  </div>
+                  <article className="indicator-card">
+                    <span>Frecuencia de ahorro</span>
+                    <strong>{formatSavingFrequency(metrics?.frecuencia_ahorro ?? null)}</strong>
+                  </article>
                 </div>
               </section>
             </div>
@@ -227,6 +213,126 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
                 </div>
               </section>
             </aside>
+
+            <section className="result-panel expense-distribution-panel" aria-labelledby="expense-distribution-title">
+              <div className="result-panel-heading">
+                <h2 id="expense-distribution-title">Distribución de gastos</h2>
+              </div>
+
+              <div className="expense-distribution-layout">
+                <div className="expense-donut-card">
+                  <div className="expense-donut-header">
+                    <span>Categorías</span>
+                  </div>
+                  <div
+                    className="expense-donut"
+                    style={{ background: viewModel.donutBackground }}
+                    role="img"
+                    aria-label={`Distribución de gastos por categoría. Total: ${toMoney(metrics?.gasto_total ?? 0)}.`}
+                  >
+                    <div>
+                      <small>Gasto</small>
+                      <strong>{toMoney(metrics?.gasto_total ?? 0)}</strong>
+                    </div>
+                  </div>
+
+                  {viewModel.categoryDistribution.length > 0 ? (
+                    <ul className="expense-legend" aria-label="Categorías de gasto">
+                      {viewModel.categoryDistribution.map((category) => (
+                        <li key={category.key}>
+                          <span className="legend-dot" style={{ background: category.color }} aria-hidden="true" />
+                          <span>{category.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="empty-list">No hay categorías de gasto para mostrar.</p>
+                  )}
+                </div>
+
+                <div className="expense-detail-column">
+                  <div className="expense-highlights">
+                    <article>
+                      <span className="expense-highlight-icon" aria-hidden="true">
+                        <img src={financeIcon} alt="" />
+                      </span>
+                      <div>
+                        <span>Gasto promedio por categoría</span>
+                        <strong>{toMoney(viewModel.averageCategoryExpense)}</strong>
+                      </div>
+                    </article>
+                    <article>
+                      <span className="expense-highlight-icon expense-highlight-icon-category" aria-hidden="true">
+                        <img src={viewModel.highestExpenseCategoryIcon} alt="" />
+                      </span>
+                      <div>
+                        <span>Tu mayor gasto es:</span>
+                        <strong>{viewModel.highestExpenseCategoryLabel}</strong>
+                      </div>
+                    </article>
+                  </div>
+
+                  {viewModel.categoryDetails.length > 0 ? (
+                    <div className="category-detail-list" aria-label="Detalle de montos por categoría">
+                      {viewModel.categoryDetails.map((category) => (
+                        <article className="category-detail-item" key={category.key}>
+                          <div>
+                            <span className="legend-dot" style={{ background: category.color }} aria-hidden="true" />
+                            <strong>{category.label}</strong>
+                          </div>
+                          <span>{toMoney(category.amount)}</span>
+                          <small>{toPercent(Math.round(category.percent))}%</small>
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {viewModel.hiddenGroupedCategories.length > 0 ? (
+                <p className="grouped-categories-note">
+                  {viewModel.hiddenGroupedCategories.length} categorías se agruparon visualmente bajo “Otros”: {viewModel.hiddenGroupedCategories.map((category) => category.label).join(', ')}.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="result-panel classified-transactions-panel" aria-labelledby="classified-transactions-title">
+              <div className="result-panel-heading">
+                <h2 id="classified-transactions-title">Transacciones clasificadas</h2>
+              </div>
+
+              {parsedResult.classifiedTransactions.length > 0 ? (
+                <div className="classified-table-wrap">
+                  <table className="classified-table">
+                    <caption>Detalle de transacciones con fecha, descripción, categoría, tipo de pago, monto y meses a deber.</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col">Categoría</th>
+                        <th scope="col">Tipo de pago</th>
+                        <th scope="col">Monto</th>
+                        <th scope="col">Meses a deber</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedResult.classifiedTransactions.map((transaction, index) => (
+                        <tr key={`${transaction.fecha ?? 'sin-fecha'}-${transaction.descripcion ?? 'sin-descripcion'}-${index}`}>
+                          <td data-label="Fecha">{formatTransactionDate(transaction.fecha)}</td>
+                          <td data-label="Descripción" className="classified-description">{transaction.descripcion ?? 'Sin descripción'}</td>
+                          <td data-label="Categoría">{transaction.categoria ?? 'No clasificada'}</td>
+                          <td data-label="Tipo de pago">{transaction.tipo_pago ?? 'No informado'}</td>
+                          <td data-label="Monto">{transaction.monto === null ? 'No informado' : toMoney(transaction.monto)}</td>
+                          <td data-label="Meses a deber">{transaction.meses_a_deber === null ? 'No aplica' : transaction.meses_a_deber}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="empty-list">El backend no envió transacciones clasificadas para este análisis.</p>
+              )}
+            </section>
           </div>
         ) : (
           <div className="empty-list">No se encontró el bloque `data` esperado en la respuesta.</div>

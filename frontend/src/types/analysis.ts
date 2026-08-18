@@ -3,6 +3,7 @@ import type { PaymentPatternKey } from './financial'
 export interface AnalysisMetrics {
   ingreso_mensual: number | null
   credito_total: number | null
+  frecuencia_ahorro: string | null
   pago_mensual_deudas: number | null
   gasto_total: number | null
   deuda_total: number | null
@@ -13,9 +14,12 @@ export interface AnalysisMetrics {
 
 export interface ClassifiedTransaction {
   tipo: string | null
+  fecha: string | null
+  descripcion: string | null
   tipo_pago: string | null
   monto: number | null
   categoria: string | null
+  meses_a_deber: number | null
 }
 
 export interface CategoryDistributionItem {
@@ -35,6 +39,7 @@ export interface PaymentPattern {
 }
 
 export interface ParsedAnalysisResult {
+  message: string | null
   profile: string | null
   score: number | null
   recommendations: string[]
@@ -59,6 +64,8 @@ export interface AnalysisViewModel {
   scorePercent: number
   profileVisuals: ProfileVisuals
   categoryDistribution: CategoryDistributionItem[]
+  categoryDetails: CategoryDistributionItem[]
+  hiddenGroupedCategories: CategoryDistributionItem[]
   donutBackground: string
   averageCategoryExpense: number
   highestExpenseCategoryLabel: string
