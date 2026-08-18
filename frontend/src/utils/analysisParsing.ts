@@ -5,6 +5,10 @@ function getNumberField(record: Record<string, unknown>, key: string) {
   return typeof record[key] === 'number' ? record[key] : null
 }
 
+function getStringField(record: Record<string, unknown>, key: string) {
+  return typeof record[key] === 'string' && record[key].trim() ? record[key] : null
+}
+
 function getAnalysisData(response: unknown) {
   if (!isRecord(response) || !isRecord(response.data)) {
     return null
@@ -47,9 +51,12 @@ function getClassifiedTransactions(value: unknown) {
 
     return [{
       tipo: typeof transaction.tipo === 'string' ? transaction.tipo : null,
+      fecha: typeof transaction.fecha === 'string' ? transaction.fecha : null,
+      descripcion: typeof transaction.descripcion === 'string' ? transaction.descripcion : null,
       tipo_pago: typeof transaction.tipo_pago === 'string' ? transaction.tipo_pago : null,
       monto: getNumberField(transaction, 'monto'),
       categoria: typeof transaction.categoria === 'string' ? transaction.categoria : null,
+      meses_a_deber: getNumberField(transaction, 'meses_a_deber'),
     }]
   })
 }
@@ -64,8 +71,10 @@ export function parseAnalysisResult(response: unknown): ParsedAnalysisResult | n
   const indicators = isRecord(data.indicadores) ? data.indicadores : {}
   const profile = typeof data.perfil_financiero === 'string' ? data.perfil_financiero : null
   const score = typeof data.score_financiero === 'number' ? data.score_financiero : null
+  const wrapperMessage = isRecord(response) ? getStringField(response, 'message') : null
 
   return {
+    message: getStringField(data, 'message') ?? wrapperMessage,
     profile,
     score,
     recommendations: getRecommendations(data),
@@ -75,6 +84,7 @@ export function parseAnalysisResult(response: unknown): ParsedAnalysisResult | n
     metrics: {
       ingreso_mensual: getNumberField(indicators, 'ingreso_mensual'),
       credito_total: getNumberField(indicators, 'credito_total'),
+      frecuencia_ahorro: getStringField(indicators, 'frecuencia_ahorro'),
       pago_mensual_deudas: getNumberField(indicators, 'pago_mensual_deudas'),
       gasto_total: getNumberField(indicators, 'gasto_total'),
       deuda_total: getNumberField(indicators, 'deuda_total'),

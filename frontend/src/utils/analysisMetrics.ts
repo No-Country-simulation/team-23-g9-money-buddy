@@ -84,6 +84,14 @@ function getCategoryDistribution(summary: Record<string, number>, percentages: R
     percent: clampPercent(percentages[key] ?? (total > 0 ? (amount / total) * 100 : 0)),
   }))
 
+  return categories.map<CategoryDistributionItem>((category) => ({
+    ...category,
+    percent: clampPercent(category.percent),
+    color: getCategoryColor(category.key),
+  }))
+}
+
+function getGroupedCategoryDistribution(categories: CategoryDistributionItem[]) {
   const nonOtherCategories = categories.filter((category) => category.key !== 'otros')
   const otherCategory = categories.find((category) => category.key === 'otros')
   const groupedCategories = categories.length > 5
@@ -98,15 +106,19 @@ function getCategoryDistribution(summary: Record<string, number>, percentages: R
       label: 'Otros',
       amount: otherCategories.reduce((sum, category) => sum + category.amount, 0),
       percent: otherCategories.reduce((sum, category) => sum + category.percent, 0),
+      color: getCategoryColor('otros'),
     }
     : null
-  const visibleCategories = groupedOther ? [...groupedCategories, groupedOther] : groupedCategories
 
-  return visibleCategories.map<CategoryDistributionItem>((category) => ({
-    ...category,
-    percent: clampPercent(category.percent),
-    color: getCategoryColor(category.key),
-  }))
+  return groupedOther ? [...groupedCategories, groupedOther] : groupedCategories
+}
+
+function getHiddenGroupedCategories(categories: CategoryDistributionItem[]) {
+  if (categories.length <= 5) {
+    return []
+  }
+
+  return categories.filter((category) => category.key !== 'otros').slice(4)
 }
 
 function getDonutBackground(categories: CategoryDistributionItem[]) {
@@ -173,8 +185,9 @@ export function buildAnalysisViewModel(parsedResult: ParsedAnalysisResult): Anal
   const debtIncomePercent = getRatioPercent(metrics.ratio_deuda_ingreso, divideOrNull(metrics.deuda_total, metrics.ingreso_mensual))
   const debtPaymentPercent = getRatioPercent(metrics.ratio_pago_deudas, divideOrNull(metrics.pago_mensual_deudas, metrics.ingreso_mensual))
   const monthsToPayDebt = getMonthsToPayDebt(metrics.deuda_total, metrics.pago_mensual_deudas)
-  const categoryDistribution = getCategoryDistribution(parsedResult.expenseSummary, parsedResult.categoryPercentages, metrics.gasto_total)
-  const highestExpenseCategory = categoryDistribution[0]
+  const categoryDetails = getCategoryDistribution(parsedResult.expenseSummary, parsedResult.categoryPercentages, metrics.gasto_total)
+  const categoryDistribution = getGroupedCategoryDistribution(categoryDetails)
+  const highestExpenseCategory = categoryDetails[0]
 
   return {
     monthlyExpensePercent,
@@ -186,9 +199,11 @@ export function buildAnalysisViewModel(parsedResult: ParsedAnalysisResult): Anal
     scorePercent: clampPercent(parsedResult.score),
     profileVisuals: getProfileVisuals(parsedResult.profile, parsedResult.score),
     categoryDistribution,
+    categoryDetails,
+    hiddenGroupedCategories: getHiddenGroupedCategories(categoryDetails),
     donutBackground: getDonutBackground(categoryDistribution),
-    averageCategoryExpense: categoryDistribution.length > 0
-      ? categoryDistribution.reduce((sum, category) => sum + category.amount, 0) / categoryDistribution.length
+    averageCategoryExpense: categoryDetails.length > 0
+      ? categoryDetails.reduce((sum, category) => sum + category.amount, 0) / categoryDetails.length
       : 0,
     highestExpenseCategoryLabel: highestExpenseCategory?.label ?? 'Sin datos',
     highestExpenseCategoryIcon: getCategoryIcon(highestExpenseCategory?.key ?? 'otros'),
