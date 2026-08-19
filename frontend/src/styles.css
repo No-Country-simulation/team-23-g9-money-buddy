@@ -1490,6 +1490,11 @@ pre {
 }
 
 @media (max-width: 640px) {
+  .result-card,
+  .result-panel {
+    padding-inline: 14px;
+  }
+
   .brand-mark {
     width: 62px;
     height: 62px;
@@ -1509,9 +1514,32 @@ pre {
   .summary-kpis,
   .indicator-grid,
   .category-detail-list,
+  .expense-detail-column .category-detail-list,
+  .expense-highlights,
   .expense-distribution-layout,
   .result-hero {
     grid-template-columns: 1fr;
+  }
+
+  .expense-donut-card {
+    min-height: auto;
+    padding-inline: 12px;
+  }
+
+  .expense-highlights article {
+    padding-inline: 14px;
+  }
+
+  .expense-highlights strong,
+  .category-detail-item strong,
+  .category-detail-item span,
+  .category-detail-item small {
+    overflow-wrap: anywhere;
+  }
+
+  .category-detail-item {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
   }
 
   .classified-table,
@@ -1557,7 +1585,8 @@ pre {
   }
 
   .expense-donut {
-    width: min(240px, 82vw);
+    width: min(210px, 72vw);
+    margin-block: 22px;
   }
 
   .row-actions,
