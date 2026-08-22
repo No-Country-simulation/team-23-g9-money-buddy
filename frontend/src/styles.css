@@ -576,6 +576,14 @@ pre:focus-visible {
   text-align: center;
 }
 
+.startup-note {
+  max-width: 28rem;
+  margin: 10px auto 0;
+  color: #7e899a;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 .analysis-card {
   display: grid;
   align-content: start;

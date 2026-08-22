@@ -24,6 +24,11 @@ export function AnalysisStatusCard({ analysis, isSubmitting, requestPreview, onS
         <button className="primary-button" type="button" disabled={isSubmitting} onClick={onSubmitAnalysis}>
           {isSubmitting ? 'Analizando…' : 'Analizar mis finanzas'}
         </button>
+        {isSubmitting ? (
+          <p className="startup-note" role="status" aria-live="polite">
+            Si el servicio estuvo inactivo, puede tardar unos segundos en despertar. Tu análisis sigue en proceso.
+          </p>
+        ) : null}
         <p className="privacy-note">Tus datos están 100% seguros y privados.</p>
       </div>
 
