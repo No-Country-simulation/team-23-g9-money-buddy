@@ -123,14 +123,15 @@ pre:focus-visible {
 
 .brand-mark {
   display: grid;
+  flex: 0 0 auto;
   width: 78px;
   height: 78px;
   place-items: center;
 }
 
 .brand-mark img {
-  width: 86px;
-  height: 86px;
+  width: 110%;
+  height: 110%;
   object-fit: contain;
 }
 
@@ -1506,6 +1507,10 @@ pre {
   .brand-mark {
     width: 62px;
     height: 62px;
+  }
+
+  .brand {
+    gap: 12px;
   }
 
   .header-note,
