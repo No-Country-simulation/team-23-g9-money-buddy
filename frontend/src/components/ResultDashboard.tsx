@@ -1,9 +1,13 @@
 import accountBalanceIcon from '../assets/icon-bank.svg'
 import arrowRightIcon from '../assets/icon-arrow-right.svg'
+import creditCardIcon from '../assets/icon-credit-card.svg'
 import checkIcon from '../assets/icon-check.svg'
 import ecoIcon from '../assets/icon-leaf.svg'
 import financeIcon from '../assets/icon-bar-chart.svg'
+import incomeIcon from '../assets/icon-income.svg'
 import receiptIcon from '../assets/icon-receipt.svg'
+import shieldCheckIcon from '../assets/icon-shield-check.svg'
+import syncIcon from '../assets/sync.svg'
 import { SUBMIT_STATUS } from '../constants/financial'
 import type { AnalysisViewModel, ParsedAnalysisResult } from '../types/analysis'
 import type { AnalysisState } from '../types/financial'
@@ -119,17 +123,32 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
 
                 <div className="indicator-grid">
                   <article className="indicator-card">
-                    <span>Ingreso mensual</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-green" aria-hidden="true">
+                        <img src={incomeIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Ingreso mensual</span>
+                    </div>
                     <strong>{metrics?.ingreso_mensual !== null ? toMoney(metrics?.ingreso_mensual ?? 0) : 'No informado'}</strong>
                   </article>
 
                   <article className="indicator-card">
-                    <span>Crédito total</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-violet" aria-hidden="true">
+                        <img src={creditCardIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Crédito total</span>
+                    </div>
                     <strong>{metrics?.credito_total !== null ? toMoney(metrics?.credito_total ?? 0) : 'No informado'}</strong>
                   </article>
 
                   <article className="indicator-card">
-                    <span>Ratio deuda/ingreso</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-green" aria-hidden="true">
+                        <img src={financeIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Ratio deuda/ingreso</span>
+                    </div>
                     <strong>{formatApproxPercent(viewModel.debtIncomePercent)}</strong>
                     <div className="progress-track" aria-hidden="true">
                       <span style={{ width: `${viewModel.debtIncomePercent}%` }} />
@@ -137,7 +156,12 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
                   </article>
 
                   <article className="indicator-card">
-                    <span>Pago de deudas</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-amber" aria-hidden="true">
+                        <img src={accountBalanceIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Pago de deudas</span>
+                    </div>
                     <strong>{formatApproxPercent(viewModel.debtPaymentPercent)}</strong>
                     <div className="progress-track" aria-hidden="true">
                       <span style={{ width: `${viewModel.debtPaymentPercent}%` }} />
@@ -145,7 +169,12 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
                   </article>
 
                   <article className="indicator-card">
-                    <span>Meses para liquidar</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-blue" aria-hidden="true">
+                        <img src={shieldCheckIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Meses para liquidar</span>
+                    </div>
                     <strong>{viewModel.monthsToPayDebt === null ? '--' : viewModel.monthsToPayDebt}</strong>
                     <div className="progress-track progress-track-blue" aria-hidden="true">
                       <span style={{ width: `${viewModel.monthsVisualPercent}%` }} />
@@ -153,7 +182,12 @@ export function ResultDashboard({ analysis, parsedResult, viewModel, onEditAnaly
                   </article>
 
                   <article className="indicator-card">
-                    <span>Frecuencia de ahorro</span>
+                    <div className="indicator-card-header">
+                      <span className="indicator-card-icon indicator-card-icon-blue" aria-hidden="true">
+                        <img src={syncIcon} alt="" aria-hidden="true" />
+                      </span>
+                      <span>Frecuencia de ahorro</span>
+                    </div>
                     <strong>{formatSavingFrequency(metrics?.frecuencia_ahorro ?? null)}</strong>
                   </article>
                 </div>

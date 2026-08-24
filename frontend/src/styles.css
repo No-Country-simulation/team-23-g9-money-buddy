@@ -794,12 +794,52 @@ pre:focus-visible {
   background: linear-gradient(180deg, #ffffff, #f8fbfd);
 }
 
-.indicator-card > span {
+.indicator-card-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.indicator-card-header > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: #667486;
   font-family: var(--font-heading);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.5;
+}
+
+.indicator-card-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 13px;
+}
+
+.indicator-card-icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.indicator-card-icon-green {
+  background: #dcfce7;
+}
+
+.indicator-card-icon-amber {
+  background: #ffedc2;
+}
+
+.indicator-card-icon-blue {
+  background: #e0ecff;
+}
+
+.indicator-card-icon-violet {
+  background: #ede9fe;
 }
 
 .expense-distribution-layout {
